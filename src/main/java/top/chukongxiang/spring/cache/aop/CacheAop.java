@@ -1,6 +1,7 @@
 package top.chukongxiang.spring.cache.aop;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -15,10 +16,11 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
-import top.chukongxiang.spring.cache.core.Cache;
-import top.chukongxiang.spring.cache.core.CacheManager;
-import top.chukongxiang.spring.cache.core.KeyGenerator;
+import top.chukongxiang.spring.cache.core.SpringCache;
+import top.chukongxiang.spring.cache.core.SpringCacheManager;
+import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
 
+import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,20 +31,26 @@ import java.util.concurrent.TimeUnit;
  * @date 2022-09-26 16:03
  */
 @Aspect
-@ConditionalOnBean(CacheManager.class)
+@ConditionalOnBean(SpringCacheManager.class)
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CacheAop {
 
     /**
      * 缓存管理器，Bean注入
      */
-    private final CacheManager cacheManager;
+    private final SpringCacheManager springCacheManager;
+
+    @PostConstruct
+    public void post() {
+        log.debug("Cache Aop 注入完成，缓存管理器：{}", springCacheManager.getClass().getSimpleName());
+    }
 
     /**
      * 缓存KeyGenerator，提高效率，不需要每次newInstance
      */
-    private static final Map<Class<? extends KeyGenerator>, KeyGenerator> KEY_GENERATOR_MAP = new HashMap<>();
+    private static final Map<Class<? extends SpringKeyGenerator>, SpringKeyGenerator> KEY_GENERATOR_MAP = new HashMap<>();
 
     /**
      * 默认前缀
@@ -65,7 +73,7 @@ public class CacheAop {
                 StringUtils.hasText(this.prefix) ? this.prefix : "";
         String[] cacheNames = cacheAnnotation.cacheNames();
         String keyStr = cacheAnnotation.key();
-        Class<? extends KeyGenerator> keyGeneratorClass = cacheAnnotation.keyGenerator();
+        Class<? extends SpringKeyGenerator> keyGeneratorClass = cacheAnnotation.keyGenerator();
         long expires = cacheAnnotation.expires();
         TimeUnit timeUnit = cacheAnnotation.timeUnit();
         Object key;
@@ -79,7 +87,7 @@ public class CacheAop {
         if (StringUtils.hasText(keyStr)) {
             key = parseKey(keyStr, joinPoint);
         } else {
-            KeyGenerator generator = KEY_GENERATOR_MAP.get(keyGeneratorClass);
+            SpringKeyGenerator generator = KEY_GENERATOR_MAP.get(keyGeneratorClass);
             if (generator == null) {
                 generator = keyGeneratorClass.newInstance();
                 KEY_GENERATOR_MAP.put(keyGeneratorClass, generator);
@@ -89,11 +97,11 @@ public class CacheAop {
 
         // 先获取缓存
         for (String cacheName : cacheNames) {
-            Cache cache = cacheManager.getCache(cacheName);
-            if (cache == null) {
+            SpringCache springCache = springCacheManager.getCache(cacheName);
+            if (springCache == null) {
                 continue;
             }
-            Object value = cache.get(key);
+            Object value = springCache.get(key);
             if (value != null) {
                 // 如果有缓存，直接返回
                 return value;
@@ -104,10 +112,10 @@ public class CacheAop {
 
         // 写缓存
         for (String cacheName : cacheNames) {
-            Cache cache =  cacheManager.getCache(cacheName);
+            SpringCache springCache =  springCacheManager.getCache(cacheName);
             // 写缓存,同时设置生存时间
-            cache.put(key, rs, timeUnit.toMillis(expires));
-            cacheManager.addCache(cache);
+            springCache.put(key, rs, timeUnit.toMillis(expires));
+            springCacheManager.addCache(springCache);
         }
         return rs;
     }

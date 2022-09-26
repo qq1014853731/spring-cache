@@ -1,7 +1,7 @@
 package top.chukongxiang.spring.cache.model.dto;
 
 import lombok.RequiredArgsConstructor;
-import top.chukongxiang.spring.cache.core.Cache;
+import top.chukongxiang.spring.cache.core.SpringCache;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentMap;
  * @date 2022-09-26 15:40
  */
 @RequiredArgsConstructor
-public class ExpiresConcurrentMapCache implements Cache {
+public class ExpiresConcurrentMapCache implements SpringCache {
 
     /**
      * cacheName

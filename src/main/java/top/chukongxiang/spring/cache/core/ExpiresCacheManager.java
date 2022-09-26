@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author 楚孔响
  * @date 2022-09-26 16:04
  */
-public class ExpiresCacheManager implements CacheManager {
+public class ExpiresCacheManager implements SpringCacheManager {
 
     /**
      * 以一个Map来作为缓存容器
@@ -18,11 +18,11 @@ public class ExpiresCacheManager implements CacheManager {
     private final ConcurrentHashMap<String, ExpiresConcurrentMapCache> caches = new ConcurrentHashMap<>();
 
     @Override
-    public void addCache(Cache cache) {
-        if (cache instanceof ExpiresConcurrentMapCache) {
-            this.caches.put(cache.getName(), (ExpiresConcurrentMapCache) cache);
+    public void addCache(SpringCache springCache) {
+        if (springCache instanceof ExpiresConcurrentMapCache) {
+            this.caches.put(springCache.getName(), (ExpiresConcurrentMapCache) springCache);
         } else {
-            throw new IllegalArgumentException("can not add cache:" + cache.getClass().getName() );
+            throw new IllegalArgumentException("can not add cache:" + springCache.getClass().getName() );
         }
     }
 

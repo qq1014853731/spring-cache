@@ -12,9 +12,9 @@ import java.util.Objects;
  * @author 楚孔响
  * @date 2022-09-26 16:28
  */
-@ConditionalOnMissingBean(CacheManager.class)
+@ConditionalOnMissingBean(SpringCacheManager.class)
 @Component
-public class DefaultKeyGenerator implements KeyGenerator {
+public class DefaultKeyGenerator implements SpringKeyGenerator {
 
     /**
      * 各个参数取值后hashCode

@@ -1,8 +1,11 @@
 package top.chukongxiang.spring.cache.core;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * @author 楚孔响
@@ -10,10 +13,16 @@ import org.springframework.stereotype.Component;
  */
 @RequiredArgsConstructor
 @Component
-@ConditionalOnBean(CacheManager.class)
+@ConditionalOnBean(SpringCacheManager.class)
+@Slf4j
 public class CacheTemplate {
 
-    private final CacheManager cacheManager;
+    @PostConstruct
+    public void post() {
+        log.debug("CacheTemplate 注入完成");
+    }
+
+    private final SpringCacheManager springCacheManager;
 
     public String getString(String cacheName, String key) {
         Object value = get(cacheName, key);
@@ -21,9 +30,9 @@ public class CacheTemplate {
     }
 
     public Object get(String cacheName, String key) {
-        Cache cache = cacheManager.getCache(cacheName);
-        if (cache == null) { return null; }
-        return cache.get(key);
+        SpringCache springCache = springCacheManager.getCache(cacheName);
+        if (springCache == null) { return null; }
+        return springCache.get(key);
     }
 
     public <T> T get(String cacheName, String key, Class<T> target) {
@@ -42,24 +51,24 @@ public class CacheTemplate {
     }
 
     public void put(String cacheName, String key, Object value, long lifeTime) {
-        Cache cache = cacheManager.getCache(cacheName);
-        if (cache == null) {
+        SpringCache springCache = springCacheManager.getCache(cacheName);
+        if (springCache == null) {
             throw new NullPointerException("cache is null");
         }
-        cache.put(key, value, lifeTime);
+        springCache.put(key, value, lifeTime);
     }
 
     public void remove(String cacheName, String key) {
-        Cache cache = cacheManager.getCache(cacheName);
-        if (cache != null) {
-            cache.evict(key);
+        SpringCache springCache = springCacheManager.getCache(cacheName);
+        if (springCache != null) {
+            springCache.evict(key);
         }
     }
 
     public void clear(String cacheName) {
-        Cache cache = cacheManager.getCache(cacheName);
-        if (cache != null) {
-            cache.clear();
+        SpringCache springCache = springCacheManager.getCache(cacheName);
+        if (springCache != null) {
+            springCache.clear();
         }
     }
 

@@ -2,7 +2,7 @@ package top.chukongxiang.spring.cache.annotation;
 
 import org.springframework.core.annotation.AliasFor;
 import top.chukongxiang.spring.cache.core.DefaultKeyGenerator;
-import top.chukongxiang.spring.cache.core.KeyGenerator;
+import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
 
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +59,6 @@ public @interface Cache {
      * key生成器，当key为空时生效
      * @return
      */
-    Class<? extends KeyGenerator> keyGenerator() default DefaultKeyGenerator.class;
+    Class<? extends SpringKeyGenerator> keyGenerator() default DefaultKeyGenerator.class;
 
 }

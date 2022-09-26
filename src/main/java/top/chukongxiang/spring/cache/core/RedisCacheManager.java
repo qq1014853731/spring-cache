@@ -7,15 +7,15 @@ import java.util.Collection;
  * @author 楚孔响
  * @date 2022-09-26 16:08
  */
-public class RedisCacheManager implements CacheManager {
+public class RedisCacheManager implements SpringCacheManager {
 
     @Override
-    public void addCache(Cache cache) {
+    public void addCache(SpringCache springCache) {
 
     }
 
     @Override
-    public Cache getCache(String name) {
+    public SpringCache getCache(String name) {
         return null;
     }
 

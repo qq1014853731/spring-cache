@@ -8,12 +8,12 @@ import java.util.Collection;
  * @author 楚孔响
  * @date 2022-09-26 15:32
  */
-public interface CacheManager {
+public interface SpringCacheManager {
 
-    void addCache(Cache cache);
+    void addCache(SpringCache springCache);
 
     @Nullable
-    Cache getCache(String name);
+    SpringCache getCache(String name);
 
     Collection<String> getCacheNames();
 

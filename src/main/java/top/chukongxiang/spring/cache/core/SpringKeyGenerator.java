@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
  * @author 楚孔响
  * @date 2022-09-26 16:27
  */
-public interface KeyGenerator {
+public interface SpringKeyGenerator {
 
     /**
      * 自动生成key

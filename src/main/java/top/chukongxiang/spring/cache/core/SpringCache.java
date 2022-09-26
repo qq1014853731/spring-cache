@@ -6,7 +6,7 @@ import org.springframework.lang.Nullable;
  * @author 楚孔响
  * @date 2022-09-26 15:32
  */
-public interface Cache {
+public interface SpringCache {
 
     /**
      * 返回cacheName
