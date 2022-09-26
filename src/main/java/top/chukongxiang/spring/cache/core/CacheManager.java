@@ -10,6 +10,7 @@ import java.util.Collection;
  */
 public interface CacheManager {
 
+    void addCache(Cache cache);
 
     @Nullable
     Cache getCache(String name);

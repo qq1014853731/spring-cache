@@ -68,6 +68,7 @@ public class ExpiresConcurrentMapCache implements Cache {
      * @param value 值
      * @param liftTime 生存时间，单位毫秒
      */
+    @Override
     public void put(Object key, Object value, long liftTime) {
         this.store.put(key, new ExpiresValue().value(value)
                 .createTime(System.currentTimeMillis())

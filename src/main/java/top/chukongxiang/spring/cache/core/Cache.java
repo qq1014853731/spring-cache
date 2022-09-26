@@ -35,6 +35,14 @@ public interface Cache {
     void put(Object key, @Nullable Object value);
 
     /**
+     * 向cache中放入一个缓存
+     * @param key 键
+     * @param value 值
+     * @param lifeTime 生存时间
+     */
+    void put(Object key, Object value, long lifeTime);
+
+    /**
      * 移除一个缓存
      * @param key 要移除的缓存键
      */

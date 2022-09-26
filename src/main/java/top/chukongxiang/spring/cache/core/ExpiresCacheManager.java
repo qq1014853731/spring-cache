@@ -1,6 +1,5 @@
 package top.chukongxiang.spring.cache.core;
 
-import org.springframework.lang.NonNull;
 import top.chukongxiang.spring.cache.model.dto.ExpiresConcurrentMapCache;
 
 import java.util.Collection;
@@ -18,12 +17,16 @@ public class ExpiresCacheManager implements CacheManager {
      */
     private final ConcurrentHashMap<String, ExpiresConcurrentMapCache> caches = new ConcurrentHashMap<>();
 
-    public void addCache(ExpiresConcurrentMapCache cache) {
-        this.caches.put(cache.getName(), cache);
+    @Override
+    public void addCache(Cache cache) {
+        if (cache instanceof ExpiresConcurrentMapCache) {
+            this.caches.put(cache.getName(), (ExpiresConcurrentMapCache) cache);
+        } else {
+            throw new IllegalArgumentException("can not add cache:" + cache.getClass().getName() );
+        }
     }
 
     @Override
-    @NonNull
     public ExpiresConcurrentMapCache getCache(String name) {
         ExpiresConcurrentMapCache cache = this.caches.get(name);
         if (cache == null) {

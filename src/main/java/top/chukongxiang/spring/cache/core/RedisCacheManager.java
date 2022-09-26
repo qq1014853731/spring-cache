@@ -10,6 +10,11 @@ import java.util.Collection;
 public class RedisCacheManager implements CacheManager {
 
     @Override
+    public void addCache(Cache cache) {
+
+    }
+
+    @Override
     public Cache getCache(String name) {
         return null;
     }

@@ -8,14 +8,16 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
-import top.chukongxiang.spring.cache.core.*;
-import top.chukongxiang.spring.cache.model.dto.ExpiresConcurrentMapCache;
+import top.chukongxiang.spring.cache.core.Cache;
+import top.chukongxiang.spring.cache.core.CacheManager;
+import top.chukongxiang.spring.cache.core.KeyGenerator;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2022-09-26 16:03
  */
 @Aspect
+@ConditionalOnBean(CacheManager.class)
 @Component
 @RequiredArgsConstructor
 public class CacheAop {
@@ -99,18 +102,12 @@ public class CacheAop {
 
         Object rs = joinPoint.proceed();
 
-        if (cacheManager instanceof ExpiresCacheManager) {
-            // 默认写缓存
-            ExpiresCacheManager expiresCacheManager = (ExpiresCacheManager) cacheManager;
-            for (String cacheName : cacheNames) {
-                ExpiresConcurrentMapCache cache = expiresCacheManager.getCache(cacheName);
-                // 写缓存,同时设置生存时间
-                cache.put(key, rs, timeUnit.toMillis(expires));
-                expiresCacheManager.addCache(cache);
-            }
-        } else if (cacheManager instanceof RedisCacheManager) {
-            // redis写缓存
-
+        // 写缓存
+        for (String cacheName : cacheNames) {
+            Cache cache =  cacheManager.getCache(cacheName);
+            // 写缓存,同时设置生存时间
+            cache.put(key, rs, timeUnit.toMillis(expires));
+            cacheManager.addCache(cache);
         }
         return rs;
     }
