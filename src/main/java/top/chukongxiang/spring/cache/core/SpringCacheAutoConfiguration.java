@@ -28,11 +28,11 @@ public class SpringCacheAutoConfiguration implements ImportBeanDefinitionRegistr
         }
 
         // 手动注册BEAN
-        registerSyntheticBeanIfMissing(registry, SpringCacheManager.class.getName(),
+        registerSyntheticBeanIfMissing(registry, SpringCacheManager.class,
                 ExpiresCacheManager.class);
-        registerSyntheticBeanIfMissing(registry, SpringCacheTemplate.class.getName(),
+        registerSyntheticBeanIfMissing(registry, SpringCacheTemplate.class,
                 SpringCacheTemplate.class);
-        registerSyntheticBeanIfMissing(registry, SpringCacheAop.class.getName(),
+        registerSyntheticBeanIfMissing(registry, SpringCacheAop.class,
                 SpringCacheAop.class);
     }
 
@@ -42,13 +42,14 @@ public class SpringCacheAutoConfiguration implements ImportBeanDefinitionRegistr
      * @param name
      * @param beanClass
      */
-    private void registerSyntheticBeanIfMissing(BeanDefinitionRegistry registry, String name, Class<?> beanClass) {
+    private void registerSyntheticBeanIfMissing(BeanDefinitionRegistry registry,
+                                                Class<?> beanClass, Class<?> defaultBeanClass) {
         // 检查指定类型的Bean name数组是否存在，如果不存在则创建Bean并注入到容器中
         if (ObjectUtils.isEmpty(
                 ((ConfigurableListableBeanFactory)this.beanFactory).getBeanNamesForType(beanClass, true, false))) {
-            RootBeanDefinition beanDefinition = new RootBeanDefinition(beanClass);
+            RootBeanDefinition beanDefinition = new RootBeanDefinition(defaultBeanClass);
             beanDefinition.setSynthetic(true);
-            registry.registerBeanDefinition(name, beanDefinition);
+            registry.registerBeanDefinition(beanClass.getName(), beanDefinition);
         }
     }
 
