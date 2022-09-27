@@ -1,38 +1,101 @@
-# spring-springCache
+~~# spring-cache
 
 #### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+灵感来自于，使用多种缓存管理器，并提供了缓存模板，可以更方便集成缓存
 
 #### 软件架构
-软件架构说明
-
+支持![SpringBoot-2.3.1.RELEASE](https://img.shields.io/badge/SpringBoot-2.3.1.RELEASE-green)版本及以上
+依赖![SpringBootAop-2.3.1.RELEASE](https://img.shields.io/badge/SpringBootAop-2.3.1.RELEASE-red)
 
 #### 安装教程
+1.引入依赖
+```xml
+<dependency>
+	<groupId>top.chukongxiang</groupId>
+	<artifactId>spring-cache</artifactId>
+	<version>${version}</version>
+</dependency>
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+2. 启动类添加注解：@EnableSpringCache
+
+```java
+import top.chukongxiang.spring.cache.annotation.EnableSpringCache;
+
+@EnableSpringCache
+@SpringBootApplication
+public class Application {
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+}
+```
 
 #### 使用说明
 
-1.  注入CacheManager
-2.  使用@Cache注解
+1. 注入CacheManager，可不注入，默认使用ExpiresCacheManager  
+   CacheManager用于管理缓存的具体实现
+   1. ExpiresCacheManager(默认值，使用ConcurrentHashMap来做缓存管理)
 
-#### 参与贡献
+   ```java
+   import top.chukongxiang.spring.cache.core.SpringCacheManager;
+   import top.chukongxiang.spring.cache.manager.ExpiresCacheManager;
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+   @Configuration
+   public class CacheConfig {
+        @Bean
+        public SpringCacheManager springCacheManager() {
+            return new ExpiresCacheManager<>();
+        }
+   }
+   ```
 
+   2. RedisCacheManager（使用Redis来做缓存管理，需要依赖spring-boot-start-data-redis）
 
-#### 特技
+   ```java
+   import top.chukongxiang.spring.cache.core.SpringCacheManager;
+   import top.chukongxiang.spring.cache.manager.RedisCacheManager;    
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+   @Configuration
+   public class CacheConfig {
+        @Bean
+        public SpringCacheManager springCacheManager(RedisTemplate<String, Object> redisTemplate) {
+            return new RedisCacheManager(redisTemplate);
+        }
+   }
+   ```
+
+2. 使用@Cache注解，注解到方法上，方法的执行结果会自动缓存
+   ```java
+   import top.chukongxiang.spring.cache.annotation.Cache;
+   import org.springframework.web.bind.annotation.RequestMapping;
+   import org.springframework.web.bind.annotation.RestController;
+   import org.springframework.web.bind.annotation.GetMapping;
+   
+   @RequestMapping("test")
+   public class Controller {
+   
+        @GetMapping("test")
+        @Cache
+        public String test() {
+            return "test";
+        }
+   }
+   ```
+
+#### @Cache参数说明
+
+|  参数名称  |  类型  |  说明  |  默认值  |
+| ------------ | ------------ | ------------ | ------------ |
+|  value  |  long  | 生存时间  |  0  |
+|  expires  |  long  |  生存时间  |  0  |
+|  timeUnit  |  TimeUnit  |  生存时间单位  |  TimeUnit.MILLISECONDS（毫秒）  |
+|  prefix  |  String  |  缓存名称cacheName前缀  |  空串  |
+|  cacheNames  |  String[]  |  缓存 cache 名称  |  [前缀:]类名:方法名  |
+|  key  |  String  |  缓存 key 支持SpringEL表达式 如果为空，则使用keyGenerator()生成  |  空串  |
+|  keyGenerator  |  Class<? extends SpringKeyGenerator>  |  key生成器，当key为空时生效  |  DefaultSpringKeyGenerator.class  |
+
+3. 使用@CacheClear清除缓存
+
+|  参数名称  |  类型  |  说明  |  默认值  |
+| ------------ | ------------ | ------------ | ------------ |
