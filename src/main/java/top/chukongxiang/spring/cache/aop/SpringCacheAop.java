@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+import top.chukongxiang.spring.cache.annotation.Cache;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
  * @date 2022-09-26 16:03
  */
 @Aspect
-@Component
 @Slf4j
 public class SpringCacheAop {
 
@@ -51,7 +50,7 @@ public class SpringCacheAop {
     /**
      * 缓存KeyGenerator，提高效率，不需要每次newInstance
      */
-    private static final Map<Class<? extends SpringKeyGenerator>, SpringKeyGenerator> KEY_GENERATOR_MAP = new HashMap<>();
+    public static final Map<Class<? extends SpringKeyGenerator>, SpringKeyGenerator> KEY_GENERATOR_MAP = new HashMap<>();
 
     /**
      * 默认前缀
@@ -67,22 +66,19 @@ public class SpringCacheAop {
         Class<?> targetClass = AopProxyUtils.ultimateTargetClass(joinPoint.getTarget());
         Method method = ClassUtils.getMostSpecificMethod(poxyMethod, targetClass);
 
-        top.chukongxiang.spring.cache.annotation.Cache cacheAnnotation =
-                method.getAnnotation(top.chukongxiang.spring.cache.annotation.Cache.class);
+       Cache cacheAnnotation = method.getAnnotation(Cache.class);
         String prefix = StringUtils.hasText(cacheAnnotation.prefix()) ?
                 cacheAnnotation.prefix() :
                 StringUtils.hasText(this.prefix) ? this.prefix : "";
         String[] cacheNames = cacheAnnotation.cacheNames();
         String keyStr = cacheAnnotation.key();
         Class<? extends SpringKeyGenerator> keyGeneratorClass = cacheAnnotation.keyGenerator();
-        long expires = cacheAnnotation.expires();
+        long expires = cacheAnnotation.value() == 0 ? cacheAnnotation.expires() : cacheAnnotation.value();
         TimeUnit timeUnit = cacheAnnotation.timeUnit();
         Object key;
 
         // cacheNames 转换
-        if (cacheNames == null || cacheNames.length == 0) {
-            cacheNames = new String[] { ( StringUtils.hasText(prefix) ? (prefix + ":") : "" ) + targetClass.getName() + ":" + method.getName() };
-        }
+        cacheNames = convertCacheNames(targetClass, method, prefix, cacheNames);
 
         // 生成key
         if (StringUtils.hasText(keyStr)) {
@@ -125,13 +121,25 @@ public class SpringCacheAop {
         return rs;
     }
 
+    public static String[] convertCacheNames(Class<?> targetClass, Method method, String prefix, String[] cacheNames) {
+        if (cacheNames == null || cacheNames.length == 0) {
+            cacheNames = new String[] { targetClass.getName() + ":" + method.getName() };
+        }
+        if (StringUtils.hasText(prefix)) {
+            for (int i = 0; i < cacheNames.length; i++) {
+                cacheNames[i] = prefix + ":" + cacheNames[i];
+            }
+        }
+        return cacheNames;
+    }
 
-    private final SpelExpressionParser spelExpressionParser = new SpelExpressionParser();
-    public Object parseKey(String key, JoinPoint joinPoint) {
+
+    private static final SpelExpressionParser SPEL_EXPRESSION_PARSER = new SpelExpressionParser();
+    public static Object parseKey(String key, JoinPoint joinPoint) {
         // joinPoint作为根节点
         EvaluationContext ctx = new StandardEvaluationContext(joinPoint);
         ctx.setVariable("args", joinPoint.getArgs());
-        return spelExpressionParser.parseExpression(key).getValue(ctx);
+        return SPEL_EXPRESSION_PARSER.parseExpression(key).getValue(ctx);
     }
 
 }

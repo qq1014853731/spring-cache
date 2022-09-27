@@ -85,15 +85,15 @@ public class Application {
 
 #### @Cache参数说明
 
-|  参数名称  |  类型  |  说明  |  默认值  |
-| ------------ | ------------ | ------------ | ------------ |
-|  value  |  long  | 生存时间  |  0  |
-|  expires  |  long  |  生存时间  |  0  |
-|  timeUnit  |  TimeUnit  |  生存时间单位  |  TimeUnit.MILLISECONDS（毫秒）  |
-|  prefix  |  String  |  缓存名称cacheName前缀  |  空串  |
-|  cacheNames  |  String[]  |  缓存 cache 名称  |  [前缀:]类名:方法名  |
-|  key  |  String  |  缓存 key 支持SpringEL表达式 如果为空，则使用keyGenerator()生成  |  空串  |
-|  keyGenerator  |  Class<? extends SpringKeyGenerator>  |  key生成器，当key为空时生效  |  DefaultSpringKeyGenerator.class  |
+| 参数名称      | 类型                                 | 说明                                                | 默认值                             |
+|--------------|-------------------------------------|---------------------------------------------------|---------------------------------|
+| value        | long                                | 生存时间(小于0为永久)                                      | 0                               |
+| expires      | long                                | 生存时间(小于0为永久)                                      | 0                               |
+| timeUnit     | TimeUnit                            | 生存时间单位                                            | TimeUnit.MILLISECONDS（毫秒）       |
+| prefix       | String                              | 缓存名称cacheName前缀，可使用全局变量“spring.cache.prefix”统一配置  | 空串                              |
+| cacheNames   | String[]                            | 缓存 cache 名称                                       | [前缀:]类名:方法名                     |
+| key          | String                              | 缓存 key 支持SpringEL表达式 如果为空，则使用keyGenerator()生成     | 空串                              |
+| keyGenerator | Class<? extends SpringKeyGenerator> | key生成器，当key为空时生效                                  | DefaultSpringKeyGenerator.class |
 
 3. 使用@CacheClear清除缓存
 

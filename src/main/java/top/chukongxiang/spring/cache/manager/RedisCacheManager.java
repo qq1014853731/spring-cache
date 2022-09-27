@@ -4,8 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
-import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 import top.chukongxiang.spring.cache.model.RedisCache;
+import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import java.util.Map;
 import java.util.Objects;
@@ -45,7 +45,21 @@ public class RedisCacheManager implements SpringCacheManager {
         Map<String, ExpiresValue<Object>> caches = redisCache.getCache();
         // 去除空key,空value，转为新map
         Map<String, Object> savedMap = caches.keySet().stream()
-                .filter(key -> key != null && Objects.nonNull(caches.get(key)) && caches.get(key).value() != null)
+                .filter(key -> {
+                    if (key == null) {
+                        return false;
+                    }
+                    ExpiresValue<Object> expiresValue = caches.get(key);
+                    if (Objects.isNull(expiresValue)) {
+                        return false;
+                    }
+                    if (expiresValue.lifeTime() <= 0) {
+                        // 永久cache
+                        return true;
+                    }
+                    // 没过期
+                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() < System.currentTimeMillis();
+                })
                 .collect(Collectors.toMap(
                         k -> springCache.getName().concat(":").concat(k),
                         k -> caches.get(k).value()));
@@ -77,5 +91,18 @@ public class RedisCacheManager implements SpringCacheManager {
     @Override
     public SpringCache getMissingCache(String cacheName) {
         return new RedisCache(cacheName, this.redisTemplate);
+    }
+
+    @Override
+    public void remove(String cacheName) {
+        SpringCache cache = CACHE_CACHE_MAP.get(cacheName);
+        cache.clear();
+        CACHE_CACHE_MAP.remove(cacheName);
+    }
+
+    @Override
+    public void remove(String cacheName, Object key) {
+        SpringCache cache = CACHE_CACHE_MAP.get(cacheName);
+        cache.evict(key);
     }
 }

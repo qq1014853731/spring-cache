@@ -8,6 +8,8 @@ import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author 楚孔响
@@ -20,10 +22,12 @@ public class RedisCache implements SpringCache {
     private final String name;
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private final Lock lock = new ReentrantLock();
+
     /**
      * 该cache仅用于保存到Redis的写入缓存
      */
-    private ConcurrentHashMap<String, ExpiresValue<Object>> cache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ExpiresValue<Object>> cache = new ConcurrentHashMap<>();
 
     @Override
     public SpringCache getNativeCache() {
@@ -32,8 +36,19 @@ public class RedisCache implements SpringCache {
 
     @Override
     public Object get(Object key) {
-        // redis
-        return this.redisTemplate.opsForValue().get(key);
+        if (lock.tryLock()) {
+            try {
+                return this.redisTemplate.opsForValue().get(key);
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            ExpiresValue<Object> expiresValue = this.cache.get(serializeKey(key));
+            if (expiresValue == null || (expiresValue.lifeTime() > 0 && (expiresValue.createTime() + expiresValue.lifeTime()) > System.currentTimeMillis())) {
+                return null;
+            }
+            return expiresValue.value();
+        }
     }
 
     @Override
@@ -50,7 +65,7 @@ public class RedisCache implements SpringCache {
 
     @Override
     public void evict(Object key) {
-        String ketStr = (String) key;
+        String ketStr = serializeKey(key);
         this.cache.remove(ketStr);
         Boolean hasKey = this.redisTemplate.hasKey(ketStr);
         if (hasKey != null && hasKey) {
@@ -60,13 +75,13 @@ public class RedisCache implements SpringCache {
 
     @Override
     public void clear() {
-        this.cache.clear();
-        Set<String> keys = this.redisTemplate.keys(getName().toString().concat(":*"));
-        if (keys == null) {
-            return;
+        Set<String> keys = this.redisTemplate.keys(getName().concat(":*"));
+        if (keys != null) {
+            keys.forEach(this::evict);
         }
-        for (String key : keys) {
-            this.redisTemplate.delete(key);
-        }
+    }
+
+    private String serializeKey(Object key) {
+        return String.valueOf(key);
     }
 }

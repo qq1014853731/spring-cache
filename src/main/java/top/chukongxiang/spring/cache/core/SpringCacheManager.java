@@ -15,4 +15,8 @@ public interface SpringCacheManager {
 
     SpringCache getMissingCache(String cacheName);
 
+    void remove(String cacheName);
+
+    void remove(String cacheName, Object key);
+
 }

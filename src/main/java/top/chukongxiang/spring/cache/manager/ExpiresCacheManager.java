@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2022-09-26 16:04
  */
 @Slf4j
-public class ExpiresCacheManager<K, V> implements SpringCacheManager {
+public class ExpiresCacheManager implements SpringCacheManager {
 
     /**
      * 以一个Map来作为缓存容器
@@ -45,5 +45,18 @@ public class ExpiresCacheManager<K, V> implements SpringCacheManager {
 
     public ExpiresConcurrentMapCache getMissingCache(String name) {
         return new ExpiresConcurrentMapCache(name);
+    }
+
+    @Override
+    public void remove(String cacheName) {
+        ExpiresConcurrentMapCache cache = this.caches.get(cacheName);
+        cache.clear();
+        this.caches.remove(cacheName);
+    }
+
+    @Override
+    public void remove(String cacheName, Object key) {
+        ExpiresConcurrentMapCache expiresConcurrentMapCache = this.caches.get(cacheName);
+        expiresConcurrentMapCache.evict(key);
     }
 }
