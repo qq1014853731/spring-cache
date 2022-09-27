@@ -10,12 +10,12 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true, fluent = true)
-public class ExpiresValue {
+public class ExpiresValue<V> {
 
     /**
      * 缓存的值
      */
-    private Object value;
+    private V value;
 
     /**
      * 该值创建的时间
