@@ -1,11 +1,11 @@
-~~# spring-cache
+# spring-cache
 
 #### 介绍
-灵感来自于，使用多种缓存管理器，并提供了缓存模板，可以更方便集成缓存
+灵感来自于spring-cache，使用多种缓存管理器，并提供了缓存模板，可以更方便集成缓存
 
 #### 软件架构
-支持![SpringBoot-2.3.1.RELEASE](https://img.shields.io/badge/SpringBoot-2.3.1.RELEASE-green)版本及以上
-依赖![SpringBootAop-2.3.1.RELEASE](https://img.shields.io/badge/SpringBootAop-2.3.1.RELEASE-red)
+![SpringBoot-2.3.1.RELEASE](https://img.shields.io/badge/SpringBoot-2.3.1.RELEASE-green)  
+![SpringBootAop-2.3.1.RELEASE](https://img.shields.io/badge/SpringBootAop-2.3.1.RELEASE-red)
 
 #### 安装教程
 1.引入依赖
