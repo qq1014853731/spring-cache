@@ -5,7 +5,6 @@ import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.model.ExpiresConcurrentMapCache;
 
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -14,41 +13,37 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2022-09-26 16:04
  */
 @Slf4j
-public class ExpiresCacheManager implements SpringCacheManager {
+public class ExpiresCacheManager<K, V> implements SpringCacheManager {
 
     /**
      * 以一个Map来作为缓存容器
      */
     private final ConcurrentHashMap<String, ExpiresConcurrentMapCache> caches = new ConcurrentHashMap<>();
 
-    public ExpiresCacheManager() {
-        log.debug("ExpiresCacheManager 注入完成");
-    }
-
     @Override
     public void addCache(SpringCache springCache) {
-        if (springCache instanceof ExpiresConcurrentMapCache) {
-            this.caches.put(springCache.getName(), (ExpiresConcurrentMapCache) springCache);
-        } else {
-            throw new IllegalArgumentException("can not add cache:" + springCache.getClass().getName() );
-        }
+        this.caches.put(springCache.getName(), (ExpiresConcurrentMapCache) springCache);
     }
 
     @Override
-    public ExpiresConcurrentMapCache getCache(String name) {
-        ExpiresConcurrentMapCache cache = this.caches.get(name);
+    public SpringCache getCache(String cacheName) {
+        ExpiresConcurrentMapCache cache = this.caches.get(cacheName);
         if (cache == null) {
-            cache = getMissingCache(name);
+            cache = getMissingCache(cacheName);
         }
         return cache;
     }
 
-    @Override
-    public Collection<String> getCacheNames() {
-        return this.caches.keySet();
-    }
+    //    @Override
+//    public ExpiresConcurrentMapCache<String, V> getCache(String cacheName) {
+//        ExpiresConcurrentMapCache cache = this.caches.get(cacheName);
+//        if (cache == null) {
+//            cache = getMissingCache(cacheName);
+//        }
+//        return cache;
+//    }
 
-    protected ExpiresConcurrentMapCache getMissingCache(String name) {
+    public ExpiresConcurrentMapCache getMissingCache(String name) {
         return new ExpiresConcurrentMapCache(name);
     }
 }

@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
+import top.chukongxiang.spring.cache.generator.DefaultSpringKeyGenerator;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
@@ -28,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2022-09-26 16:03
  */
 @Aspect
+@Component
 @Slf4j
 public class SpringCacheAop {
 
@@ -38,12 +41,11 @@ public class SpringCacheAop {
 
     public SpringCacheAop(SpringCacheManager springCacheManager) {
         this.springCacheManager = springCacheManager;
-        log.debug("SpringCache AOP注入完成");
     }
 
     @PostConstruct
     public void post() {
-        log.debug("Cache Aop 注入完成，缓存管理器：{}", springCacheManager.getClass().getSimpleName());
+        log.info("Cache Aop 注入完成，缓存管理器：{}", springCacheManager.getClass().getSimpleName());
     }
 
     /**
@@ -86,6 +88,10 @@ public class SpringCacheAop {
         if (StringUtils.hasText(keyStr)) {
             key = parseKey(keyStr, joinPoint);
         } else {
+            // 使用SpringKey生成器
+            if (keyGeneratorClass == null) {
+                keyGeneratorClass = DefaultSpringKeyGenerator.class;
+            }
             SpringKeyGenerator generator = KEY_GENERATOR_MAP.get(keyGeneratorClass);
             if (generator == null) {
                 generator = keyGeneratorClass.newInstance();

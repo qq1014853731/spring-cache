@@ -18,7 +18,7 @@ public interface SpringCache {
      * 返回实例化后的cache对象
      * @return 实例化后的cache对象
      */
-    Object getNativeCache();
+    SpringCache getNativeCache();
 
     /**
      * 根据Key获取缓存的值

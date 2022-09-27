@@ -1,4 +1,4 @@
-package top.chukongxiang.spring.cache.model;
+package top.chukongxiang.spring.cache.model.value;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

@@ -2,6 +2,7 @@ package top.chukongxiang.spring.cache.model;
 
 import lombok.RequiredArgsConstructor;
 import top.chukongxiang.spring.cache.core.SpringCache;
+import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,7 +23,7 @@ public class ExpiresConcurrentMapCache implements SpringCache {
     /**
      * 缓存内容map
      */
-    private final ConcurrentMap<Object, ExpiresValue> store = getNativeCache();
+    private final ConcurrentMap<Object, ExpiresValue<Object>> store = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -30,8 +31,8 @@ public class ExpiresConcurrentMapCache implements SpringCache {
     }
 
     @Override
-    public ConcurrentMap<Object, ExpiresValue> getNativeCache() {
-        return new ConcurrentHashMap<>();
+    public SpringCache getNativeCache() {
+        return this;
     }
 
     /**
@@ -41,7 +42,7 @@ public class ExpiresConcurrentMapCache implements SpringCache {
      */
     @Override
     public Object get(Object key) {
-        ExpiresValue expiresValue = this.store.get(key);
+        ExpiresValue<Object> expiresValue = this.store.get(key);
         if (expiresValue == null) {
             return null;
         }
@@ -57,6 +58,7 @@ public class ExpiresConcurrentMapCache implements SpringCache {
         return expiresValue.value();
     }
 
+
     @Override
     public void put(Object key, Object value) {
         put(key, value, 0);
@@ -70,7 +72,7 @@ public class ExpiresConcurrentMapCache implements SpringCache {
      */
     @Override
     public void put(Object key, Object value, long liftTime) {
-        this.store.put(key, new ExpiresValue().value(value)
+        this.store.put(key, new ExpiresValue<>().value(value)
                 .createTime(System.currentTimeMillis())
                 .lifeTime(liftTime));
     }

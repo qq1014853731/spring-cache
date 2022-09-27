@@ -12,8 +12,8 @@ public class SpringCacheTemplate {
     private final SpringCacheManager springCacheManager;
 
     public SpringCacheTemplate(SpringCacheManager springCacheManager) {
-        log.debug("CacheTemplate 注入完成");
         this.springCacheManager = springCacheManager;
+        log.info("缓存操作工具 CacheTemplate 注入完成");
     }
 
     public String getString(String cacheName, String key) {
