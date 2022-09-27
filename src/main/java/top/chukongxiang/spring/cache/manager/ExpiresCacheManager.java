@@ -1,5 +1,6 @@
 package top.chukongxiang.spring.cache.manager;
 
+import lombok.extern.slf4j.Slf4j;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.model.ExpiresConcurrentMapCache;
@@ -12,12 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author 楚孔响
  * @date 2022-09-26 16:04
  */
+@Slf4j
 public class ExpiresCacheManager implements SpringCacheManager {
 
     /**
      * 以一个Map来作为缓存容器
      */
     private final ConcurrentHashMap<String, ExpiresConcurrentMapCache> caches = new ConcurrentHashMap<>();
+
+    public ExpiresCacheManager() {
+        log.debug("ExpiresCacheManager 注入完成");
+    }
 
     @Override
     public void addCache(SpringCache springCache) {

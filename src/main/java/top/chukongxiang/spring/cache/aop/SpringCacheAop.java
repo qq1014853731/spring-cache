@@ -1,6 +1,5 @@
 package top.chukongxiang.spring.cache.aop;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -29,7 +28,6 @@ import java.util.concurrent.TimeUnit;
  * @date 2022-09-26 16:03
  */
 @Aspect
-@RequiredArgsConstructor
 @Slf4j
 public class SpringCacheAop {
 
@@ -37,6 +35,11 @@ public class SpringCacheAop {
      * 缓存管理器，Bean注入
      */
     private final SpringCacheManager springCacheManager;
+
+    public SpringCacheAop(SpringCacheManager springCacheManager) {
+        this.springCacheManager = springCacheManager;
+        log.debug("SpringCache AOP注入完成");
+    }
 
     @PostConstruct
     public void post() {
