@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>top.chukongxiang</groupId>
-    <artifactId>spring-springCache</artifactId>
+    <artifactId>spring-cache</artifactId>
     <version>1.0</version>
 
     <properties>

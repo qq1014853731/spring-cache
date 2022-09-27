@@ -1,4 +1,4 @@
-package top.chukongxiang.spring.cache.model.dto;
+package top.chukongxiang.spring.cache.model;
 
 import lombok.RequiredArgsConstructor;
 import top.chukongxiang.spring.cache.core.SpringCache;

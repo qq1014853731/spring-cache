@@ -1,28 +1,20 @@
 package top.chukongxiang.spring.cache.core;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 /**
  * @author 楚孔响
  * @date 2022-09-26 17:34
  */
-@RequiredArgsConstructor
-@Component
-@ConditionalOnBean(SpringCacheManager.class)
 @Slf4j
-public class CacheTemplate {
-
-    @PostConstruct
-    public void post() {
-        log.debug("CacheTemplate 注入完成");
-    }
+public class SpringCacheTemplate {
 
     private final SpringCacheManager springCacheManager;
+
+    public SpringCacheTemplate(SpringCacheManager springCacheManager) {
+        log.debug("CacheTemplate 注入完成");
+        this.springCacheManager = springCacheManager;
+    }
 
     public String getString(String cacheName, String key) {
         Object value = get(cacheName, key);

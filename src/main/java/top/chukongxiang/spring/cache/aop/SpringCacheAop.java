@@ -9,11 +9,9 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import top.chukongxiang.spring.cache.core.SpringCache;
@@ -31,11 +29,9 @@ import java.util.concurrent.TimeUnit;
  * @date 2022-09-26 16:03
  */
 @Aspect
-@ConditionalOnBean(SpringCacheManager.class)
-@Component
 @RequiredArgsConstructor
 @Slf4j
-public class CacheAop {
+public class SpringCacheAop {
 
     /**
      * 缓存管理器，Bean注入
@@ -55,7 +51,7 @@ public class CacheAop {
     /**
      * 默认前缀
      */
-    @Value("${spring.cache.prefix}")
+    @Value("${spring.cache.prefix:}")
     String prefix;
 
     @Around("@annotation(top.chukongxiang.spring.cache.annotation.Cache)")

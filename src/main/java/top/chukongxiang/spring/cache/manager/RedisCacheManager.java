@@ -1,4 +1,7 @@
-package top.chukongxiang.spring.cache.core;
+package top.chukongxiang.spring.cache.manager;
+
+import top.chukongxiang.spring.cache.core.SpringCache;
+import top.chukongxiang.spring.cache.core.SpringCacheManager;
 
 import java.util.Collection;
 

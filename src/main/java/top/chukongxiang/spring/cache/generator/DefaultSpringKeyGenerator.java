@@ -1,7 +1,6 @@
-package top.chukongxiang.spring.cache.core;
+package top.chukongxiang.spring.cache.generator;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
+import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -12,9 +11,7 @@ import java.util.Objects;
  * @author 楚孔响
  * @date 2022-09-26 16:28
  */
-@ConditionalOnMissingBean(SpringCacheManager.class)
-@Component
-public class DefaultKeyGenerator implements SpringKeyGenerator {
+public class DefaultSpringKeyGenerator implements SpringKeyGenerator {
 
     /**
      * 各个参数取值后hashCode
