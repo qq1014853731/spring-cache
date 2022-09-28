@@ -27,7 +27,7 @@ public class RedisCache implements SpringCache {
     /**
      * 该cache仅用于保存到Redis的写入缓存
      */
-    private final ConcurrentHashMap<String, ExpiresValue<Object>> cache = new ConcurrentHashMap<>();
+    protected final ConcurrentHashMap<String, ExpiresValue<Object>> store = new ConcurrentHashMap<>();
 
     @Override
     public SpringCache getNativeCache() {
@@ -36,19 +36,29 @@ public class RedisCache implements SpringCache {
 
     @Override
     public Object get(Object key) {
-        if (lock.tryLock()) {
-            try {
-                return this.redisTemplate.opsForValue().get(key);
-            } finally {
-                lock.unlock();
+        Object value;
+        ExpiresValue<Object> expiresValue = this.store.get(serializeKey(key));
+        if (expiresValue == null || (expiresValue.lifeTime() > 0 && (expiresValue.createTime() + expiresValue.lifeTime()) > System.currentTimeMillis())) {
+            if (lock.tryLock()) {
+                try {
+                    if (expiresValue == null || expiresValue.value() == null) {
+                        value = this.redisTemplate.opsForValue().get(key);
+                    } else {
+                        value = null;
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            } else if (expiresValue == null) {
+                value = null;
+            } else {
+                value = expiresValue.value();
             }
         } else {
-            ExpiresValue<Object> expiresValue = this.cache.get(serializeKey(key));
-            if (expiresValue == null || (expiresValue.lifeTime() > 0 && (expiresValue.createTime() + expiresValue.lifeTime()) > System.currentTimeMillis())) {
-                return null;
-            }
-            return expiresValue.value();
+            value = expiresValue.value();
         }
+
+        return value;
     }
 
     @Override
@@ -58,7 +68,7 @@ public class RedisCache implements SpringCache {
 
     @Override
     public void put(Object key, Object value, long lifeTime) {
-        this.cache.put((String) key, new ExpiresValue<>().value(value)
+        this.store.put((String) key, new ExpiresValue<>().value(value)
                 .lifeTime(lifeTime)
                 .createTime(System.currentTimeMillis()));
     }
@@ -66,7 +76,7 @@ public class RedisCache implements SpringCache {
     @Override
     public void evict(Object key) {
         String ketStr = serializeKey(key);
-        this.cache.remove(ketStr);
+        this.store.remove(ketStr);
         Boolean hasKey = this.redisTemplate.hasKey(ketStr);
         if (hasKey != null && hasKey) {
             this.redisTemplate.delete(ketStr);

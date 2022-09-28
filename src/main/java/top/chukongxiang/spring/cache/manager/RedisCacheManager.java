@@ -42,7 +42,7 @@ public class RedisCacheManager implements SpringCacheManager {
         RedisCache redisCache = (RedisCache) springCache.getNativeCache();
         // 对cache进行put操作
         String cacheName = redisCache.getName();
-        Map<String, ExpiresValue<Object>> caches = redisCache.getCache();
+        Map<String, ExpiresValue<Object>> caches = redisCache.getStore();
         // 去除空key,空value，转为新map
         Map<String, Object> savedMap = caches.keySet().stream()
                 .filter(key -> {
