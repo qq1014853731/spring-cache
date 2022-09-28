@@ -12,7 +12,7 @@ import java.lang.annotation.*;
  * @date 2022-09-27 0:59
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD})
 @Documented
 public @interface CacheClear {
 
