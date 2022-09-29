@@ -39,111 +39,111 @@ public class Application {
    CacheManager用于管理缓存的具体实现
    1. ExpiresCacheManager(默认值，使用ConcurrentHashMap来做缓存管理)
 
-   ```java
-   import top.chukongxiang.spring.cache.core.SpringCacheManager;
-   import top.chukongxiang.spring.cache.manager.ExpiresCacheManager;
+```java
+import top.chukongxiang.spring.cache.core.SpringCacheManager;
+import top.chukongxiang.spring.cache.manager.ExpiresCacheManager;
 
-   @Configuration
-   public class CacheConfig {
-        @Bean
-        public SpringCacheManager springCacheManager() {
-            return new ExpiresCacheManager<>();
-        }
-   }
-   ```
+@Configuration
+public class CacheConfig {
+     @Bean
+     public SpringCacheManager springCacheManager() {
+         return new ExpiresCacheManager<>();
+     }
+}
+```
 
    2. RedisCacheManager（使用Redis来做缓存管理，需要依赖spring-boot-start-data-redis）
 
-   ```java
-   import top.chukongxiang.spring.cache.core.SpringCacheManager;
-   import top.chukongxiang.spring.cache.manager.RedisCacheManager;    
+```java
+import top.chukongxiang.spring.cache.core.SpringCacheManager;
+import top.chukongxiang.spring.cache.manager.RedisCacheManager;    
 
-   @Configuration
-   public class CacheConfig {
-        @Bean
-        SpringCacheManager springCacheManager(RedisConnectionFactory redisConnectionFactory) {
-            return new RedisCacheManager(redisConnectionFactory);
-        }
-   }
-   ```
+@Configuration
+public class CacheConfig {
+     @Bean
+     SpringCacheManager springCacheManager(RedisConnectionFactory redisConnectionFactory) {
+         return new RedisCacheManager(redisConnectionFactory);
+     }
+}
+  ```
    
    或
-   
-2. ```java
-   import top.chukongxiang.spring.cache.core.SpringCacheManager;
-   import top.chukongxiang.spring.cache.manager.RedisCacheManager;    
 
-   @Configuration
-   public class CacheConfig {
-        @Bean
-        public SpringCacheManager springCacheManager(RedisTemplate<String, Object> redisTemplate) {
-            return new RedisCacheManager(redisTemplate);
-        }
-   }
-   ```
+```java
+import top.chukongxiang.spring.cache.core.SpringCacheManager;
+import top.chukongxiang.spring.cache.manager.RedisCacheManager;    
+
+@Configuration
+public class CacheConfig {
+     @Bean
+     public SpringCacheManager springCacheManager(RedisTemplate<String, Object> redisTemplate) {
+         return new RedisCacheManager(redisTemplate);
+     }
+}
+```
    
    3. MyBatisCacheManager（使用Mybatis作为缓存管理器，需依赖mybatis和mybatis-spring）
       1. 如果您的依赖已经以来了上面的两个包（mybatis、mybatis-spring），则不需要重复引入 
       2. 表结构参考：MybatisCacheEntity 
       3. 映射关系参考MybatisCacheMapper类中selectByKey方法上的Results注解
 
-   ```java
-   @Configuration
-   public class CacheConfig {
-        @Value("spring.cache.table-name")
-        String cacheTableName;
-        
-        @Bean
-        SpringCacheManager springCacheManager(SqlSessionTemplate sqlSessionTemplate) {
-            return new MybatisCacheManager(sqlSessionTemplate, cacheTableName);
-        }
-   }
-   ```
+```java
+@Configuration
+public class CacheConfig {
+     @Value("spring.cache.table-name")
+     String cacheTableName;
+     
+     @Bean
+     SpringCacheManager springCacheManager(SqlSessionTemplate sqlSessionTemplate) {
+         return new MybatisCacheManager(sqlSessionTemplate, cacheTableName);
+     }
+}
+```
 
 3. 使用@Cache注解，注解到方法上，方法的执行结果会自动缓存
-   ```java
-   import top.chukongxiang.spring.cache.annotation.Cache;
-   import org.springframework.web.bind.annotation.RequestMapping;
-   import org.springframework.web.bind.annotation.RestController;
-   import org.springframework.web.bind.annotation.GetMapping;
-   
-   @RequestMapping("test")
-   public class Controller {
-   
-        @GetMapping("test")
-        @Cache
-        public String test() {
-            return "test";
-        }
-   }
-   ```
+```java
+import top.chukongxiang.spring.cache.annotation.Cache;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@RequestMapping("test")
+public class Controller {
+
+     @GetMapping("test")
+     @Cache
+     public String test() {
+         return "test";
+     }
+}
+```
 4. 使用@CacheClear与@CacheClears清除缓存
-   ```java
-        import org.springframework.web.bind.annotation.RequestMapping;
-        import org.springframework.web.bind.annotation.RestController;
-        import org.springframework.web.bind.annotation.GetMapping;
-        import top.chukongxiang.spring.cache.annotation.CacheClear;
-        import top.chukongxiang.spring.cache.annotation.CacheClears;
-   
-        @RequestMapping("test")
-        public class Controller { 
-   
-            @GetMapping("test")
-            @CacheClear
-            public String test() {
-                return "test";
-            }
-            
-            @RequestMapping("/{a}")
-            @CacheClears({
-                @CacheClear(key = "#args[0]", beforeClear = true),
-                @CacheClear(key = "#args[0]", beforeClear = false)
-            })
-            public String test(@PathVariable String a) {
-                return a + " === " + UUID.randomUUID();
-            }
-   }
-   ```
+```java
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import top.chukongxiang.spring.cache.annotation.CacheClear;
+import top.chukongxiang.spring.cache.annotation.CacheClears;
+
+@RequestMapping("test")
+public class Controller { 
+    
+    @GetMapping("test")
+    @CacheClear 
+    public String test() {
+        return "test";
+    }
+    
+    @RequestMapping("/{a}")
+    @CacheClears({
+            @CacheClear(key = "#args[0]", beforeClear = true),
+            @CacheClear(key = "#args[0]", beforeClear = false)
+    })
+    public String test(@PathVariable String a) {
+        return a + " === " + UUID.randomUUID();
+    }
+}
+```
 
 
 #### @Cache参数说明
