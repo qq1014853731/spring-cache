@@ -8,13 +8,13 @@ import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.mapper.MybatisCacheMapper;
 import top.chukongxiang.spring.cache.model.MybatisCache;
 import top.chukongxiang.spring.cache.model.value.MybatisCacheEntity;
-import top.chukongxiang.spring.cache.tool.SnowflakeIdWorker;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MyBatis缓存管理，表结构参考：
+ * MyBatis缓存管理，表结构参考：{@link MybatisCacheEntity},
+ * 映射关系参考{@link MybatisCacheMapper#selectByKey}上的{@link org.apache.ibatis.annotations.Results}注解
  * @author 楚孔响
  * @date 2022-09-28 9:14
  */
@@ -22,14 +22,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MybatisCacheManager implements SpringCacheManager {
 
     private static final Map<String, SpringCache> CACHE_CACHE_MAP = new ConcurrentHashMap<>();
-    private final String tableName;
-    private final MybatisCacheMapper mapper;
-    private final SnowflakeIdWorker idWorker = new SnowflakeIdWorker(0, 0);
 
     /**
-     *
+     * 缓存表的表名，表结构参考：{@link MybatisCacheEntity},
+     * 映射关系参考{@link MybatisCacheMapper#selectByKey}上的{@link org.apache.ibatis.annotations.Results}注解
+     */
+    private final String tableName;
+    private final MybatisCacheMapper mapper;
+
+    /**
+     * 构造器
      * @param sqlSessionTemplate sqlSessionTemplate
-     * @param tableName 缓存表的表名，表结构参考：{@link MybatisCacheEntity}
+     * @param tableName 缓存表的表名，表结构参考：{@link MybatisCacheEntity},
+     *                  映射关系参考{@link MybatisCacheMapper#selectByKey}上的{@link org.apache.ibatis.annotations.Results}注解
      */
     public MybatisCacheManager(SqlSessionTemplate sqlSessionTemplate, String tableName) {
         this.tableName = tableName;

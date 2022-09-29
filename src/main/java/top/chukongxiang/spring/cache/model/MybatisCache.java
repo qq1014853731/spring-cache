@@ -51,7 +51,7 @@ public class MybatisCache implements SpringCache {
         }
         MybatisCacheEntity mybatisCacheEntity;
         try {
-            mybatisCacheEntity = this.mapper.selectOne(tableName, getName(), ByteUtil.parseToByte(key));
+            mybatisCacheEntity = this.mapper.selectByKey(tableName, getName(), ByteUtil.parseToByte(key));
         } catch (IOException e) {
             throw new RuntimeException(key.getClass().getName() + " parse to byte error!");
         }

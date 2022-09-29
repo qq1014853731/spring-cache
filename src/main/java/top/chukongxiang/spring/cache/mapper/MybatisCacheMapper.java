@@ -62,9 +62,9 @@ public interface MybatisCacheMapper {
             @Result(column = "save_time", property = "saveTime"),
             @Result(column = "life_time", property = "lifeTime"),
     })
-    MybatisCacheEntity selectOne(@Param("tableName") String tableName,
-                  @Param("cacheName") String cacheName,
-                  @Param("key") byte[] key);
+    MybatisCacheEntity selectByKey(@Param("tableName") String tableName,
+                                   @Param("cacheName") String cacheName,
+                                   @Param("key") byte[] key);
 
     @Select("SELECT * FROM `${tableName}` WHERE `cache_name` = #{cacheName}")
     @ResultMap("mybatisCache")

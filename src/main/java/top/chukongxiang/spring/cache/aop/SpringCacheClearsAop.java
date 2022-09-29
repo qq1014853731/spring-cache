@@ -37,12 +37,9 @@ public class SpringCacheClearsAop {
     @Around("@annotation(cacheClears)")
     public Object around(ProceedingJoinPoint joinPoint, CacheClears cacheClears) throws Throwable {
 
-
-        CacheClear[] cacheClearArr = cacheClears.value().length > 0 ? cacheClears.value() : cacheClears.cacheClears();
-
         List<CacheClear> beforeCacheClears = new ArrayList<>();
         List<CacheClear> afterCacheClears = new ArrayList<>();
-        for (CacheClear cacheClear : cacheClearArr) {
+        for (CacheClear cacheClear : cacheClears.value()) {
             if (cacheClear.beforeClear()) {
                 beforeCacheClears.add(cacheClear);
             } else {

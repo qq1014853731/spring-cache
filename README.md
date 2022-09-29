@@ -59,13 +59,46 @@ public class Application {
    @Configuration
    public class CacheConfig {
         @Bean
+        SpringCacheManager springCacheManager(RedisConnectionFactory redisConnectionFactory) {
+            return new RedisCacheManager(redisConnectionFactory);
+        }
+   }
+   ```
+   
+   或
+   
+2. ```java
+   import top.chukongxiang.spring.cache.core.SpringCacheManager;
+   import top.chukongxiang.spring.cache.manager.RedisCacheManager;    
+
+   @Configuration
+   public class CacheConfig {
+        @Bean
         public SpringCacheManager springCacheManager(RedisTemplate<String, Object> redisTemplate) {
             return new RedisCacheManager(redisTemplate);
         }
    }
    ```
+   
+   3. MyBatisCacheManager（使用Mybatis作为缓存管理器，需依赖mybatis和mybatis-spring）
+      1. 如果您的依赖已经以来了上面的两个包（mybatis、mybatis-spring），则不需要重复引入 
+      2. 表结构参考：MybatisCacheEntity 
+      3. 映射关系参考MybatisCacheMapper类中selectByKey方法上的Results注解
 
-2. 使用@Cache注解，注解到方法上，方法的执行结果会自动缓存
+   ```java
+   @Configuration
+   public class CacheConfig {
+        @Value("spring.cache.table-name")
+        String cacheTableName;
+        
+        @Bean
+        SpringCacheManager springCacheManager(SqlSessionTemplate sqlSessionTemplate) {
+            return new MybatisCacheManager(sqlSessionTemplate, cacheTableName);
+        }
+   }
+   ```
+
+3. 使用@Cache注解，注解到方法上，方法的执行结果会自动缓存
    ```java
    import top.chukongxiang.spring.cache.annotation.Cache;
    import org.springframework.web.bind.annotation.RequestMapping;
@@ -82,6 +115,34 @@ public class Application {
         }
    }
    ```
+4. 使用@CacheClear与@CacheClears清除缓存
+   ```java
+        import org.springframework.web.bind.annotation.RequestMapping;
+        import org.springframework.web.bind.annotation.RestController;
+        import org.springframework.web.bind.annotation.GetMapping;
+        import top.chukongxiang.spring.cache.annotation.CacheClear;
+        import top.chukongxiang.spring.cache.annotation.CacheClears;
+   
+        @RequestMapping("test")
+        public class Controller { 
+   
+            @GetMapping("test")
+            @CacheClear
+            public String test() {
+                return "test";
+            }
+            
+            @RequestMapping("/{a}")
+            @CacheClears({
+                @CacheClear(key = "#args[0]", beforeClear = true),
+                @CacheClear(key = "#args[0]", beforeClear = false)
+            })
+            public String test(@PathVariable String a) {
+                return a + " === " + UUID.randomUUID();
+            }
+   }
+   ```
+
 
 #### @Cache参数说明
 
@@ -94,8 +155,3 @@ public class Application {
 | cacheNames   | String[]                            | 缓存 cache 名称                                       | [前缀:]类名:方法名                     |
 | key          | String                              | 缓存 key 支持SpringEL表达式 如果为空，则使用keyGenerator()生成     | 空串                              |
 | keyGenerator | Class<? extends SpringKeyGenerator> | key生成器，当key为空时生效                                  | DefaultSpringKeyGenerator.class |
-
-3. 使用@CacheClear清除缓存
-
-|  参数名称  |  类型  |  说明  |  默认值  |
-| ------------ | ------------ | ------------ | ------------ |

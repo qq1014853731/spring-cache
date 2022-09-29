@@ -1,7 +1,5 @@
 package top.chukongxiang.spring.cache.annotation;
 
-import org.springframework.core.annotation.AliasFor;
-
 import java.lang.annotation.*;
 
 /**
@@ -13,10 +11,6 @@ import java.lang.annotation.*;
 @Documented
 public @interface CacheClears {
 
-    @AliasFor("cacheClears")
-    CacheClear[] value() default {};
-
-    @AliasFor("value")
-    CacheClear[] cacheClears() default {};
+    CacheClear[] value();
 
 }
