@@ -107,7 +107,7 @@ public class SpringCacheAop {
             if (nativeValue == null) {
                 continue;
             }
-            if (nativeValue.lifeTime() != expires) {
+            if (nativeValue.lifeTime() != timeUnit.toMillis(expires)) {
                 // 本次启动修改了缓存日期
                 springCache.evict(key);
                 continue;
