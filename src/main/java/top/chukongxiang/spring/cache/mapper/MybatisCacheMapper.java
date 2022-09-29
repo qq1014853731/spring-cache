@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.*;
 import org.apache.ibatis.type.JdbcType;
 import top.chukongxiang.spring.cache.model.value.MybatisCacheEntity;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -53,7 +54,16 @@ public interface MybatisCacheMapper {
     Long removeById(@Param("tableName") String tableName,
                     @Param("id") Long id);
 
-    @Select("SELECT * FROM `${tableName}` WHERE `cache_name` = #{cacheName} AND `key` = #{key, jdbcType=BLOB}")
+    @Delete("<script>" +
+            "DELETE FROM `${tableName}` WHERE `id` in " +
+            "<foreach collection='ids' item='id' separator=',' open='(' colse=')'>" +
+            "#{id}" +
+            "</foreach>" +
+            "</script>")
+    Long removeByIds(@Param("tableName") String tableName,
+                     @Param("ids") Collection<Long> ids);
+
+    @Select("SELECT * FROM `${tableName}` WHERE `cache_name` = #{cacheName} AND `key` = #{key, jdbcType=BLOB} ORDER BY `save_time`")
     @Results(id = "mybatisCache", value = {
             @Result(column = "id", property = "id", id = true),
             @Result(column = "cache_name", property = "cacheName"),
@@ -62,7 +72,7 @@ public interface MybatisCacheMapper {
             @Result(column = "save_time", property = "saveTime"),
             @Result(column = "life_time", property = "lifeTime"),
     })
-    MybatisCacheEntity selectByKey(@Param("tableName") String tableName,
+    List<MybatisCacheEntity> selectByKey(@Param("tableName") String tableName,
                                    @Param("cacheName") String cacheName,
                                    @Param("key") byte[] key);
 
