@@ -31,7 +31,7 @@
 
     <groupId>top.chukongxiang</groupId>
     <artifactId>spring-cache</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.4.0</version>
     <name>spring-cache</name>
     <profiles>
         <profile>
