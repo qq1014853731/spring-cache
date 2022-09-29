@@ -37,16 +37,16 @@ public class RedisCache implements SpringCache {
 
     @Override
     public ExpiresValue<Object> getNativeValue(Object key) {
-        String keyStr = serializeKey(key);
+        String keyStr = getName().concat(":").concat(serializeKey(key));
         Long expire = redisTemplate.getExpire(keyStr);
-        if (expire == null || expire < 0) {
+        if (expire == null || expire == -2) {
             // 不存在
             return null;
         }
         Object value = redisTemplate.opsForValue().get(keyStr);
         return new ExpiresValue<>().value(value)
-                .lifeTime(expire)
-                .createTime(System.currentTimeMillis() - expire);
+                .lifeTime(expire == -1 ? 0 : expire)
+                .createTime(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(expire));
     }
 
     @Override
@@ -54,16 +54,20 @@ public class RedisCache implements SpringCache {
         if (Objects.isNull(key) || Objects.isNull(value)) {
             return;
         }
-        String keyStr = serializeKey(key);
+        String keyStr = getName().concat(":").concat(serializeKey(key));
         this.redisTemplate.opsForValue().set(keyStr, value);
     }
 
     @Override
     public void put(Object key, Object value, long lifeTime) {
-        if (Objects.isNull(key) || Objects.isNull(value) || lifeTime <= 0) {
+        if (Objects.isNull(key) || Objects.isNull(value)) {
             return;
         }
-        String keyStr = serializeKey(key);
+        if (lifeTime == 0) {
+            put(key, value);
+            return;
+        }
+        String keyStr = getName().concat(":").concat(serializeKey(key));
         this.redisTemplate.opsForValue().set(keyStr, value, lifeTime, TimeUnit.MILLISECONDS);
     }
 
@@ -72,7 +76,7 @@ public class RedisCache implements SpringCache {
         if (Objects.isNull(key)) {
             return;
         }
-        String ketStr = serializeKey(key);
+        String ketStr = getName().concat(":").concat(serializeKey(key));
         this.redisTemplate.delete(ketStr);
     }
 
