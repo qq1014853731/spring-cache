@@ -18,6 +18,7 @@ import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
 import top.chukongxiang.spring.cache.generator.DefaultSpringKeyGenerator;
+import top.chukongxiang.spring.cache.model.RedisCache;
 import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import javax.annotation.PostConstruct;
@@ -105,6 +106,20 @@ public class SpringCacheAop {
             }
             ExpiresValue<Object> nativeValue = springCache.getNativeValue(key);
             if (nativeValue == null) {
+                continue;
+            }
+            if ((springCache instanceof RedisCache)) {
+                if (nativeValue.value() != null) {
+                    if (nativeValue.lifeTime() == timeUnit.toMillis(expires) ||
+                            (timeUnit.toMillis(expires) >= nativeValue.lifeTime() && nativeValue.lifeTime() > 0)) {
+                        // redis中保存的是永久键
+                        // 设置的也是永久键，视为没修改
+                        // redis中保存的不是永久键
+                        // 设置的生存周期比redis中剩余的生存周期要大，视为没修改
+                        return nativeValue.value();
+                    }
+                    springCache.evict(key);
+                }
                 continue;
             }
             if (nativeValue.lifeTime() != timeUnit.toMillis(expires)) {

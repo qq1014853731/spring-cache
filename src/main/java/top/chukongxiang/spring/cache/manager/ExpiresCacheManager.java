@@ -31,6 +31,7 @@ public class ExpiresCacheManager implements SpringCacheManager {
         if (cache == null) {
             cache = getMissingCache(cacheName);
         }
+        this.caches.put(cacheName, cache);
         return cache;
     }
 
