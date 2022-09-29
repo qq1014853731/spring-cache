@@ -55,7 +55,10 @@ public class MybatisCache implements SpringCache {
         }
         Object value = null;
         ExpiresValue<Object> expiresValue = this.store.get(key);
-        if (expiresValue == null || (expiresValue.lifeTime() > 0 && (expiresValue.createTime() + expiresValue.lifeTime()) > System.currentTimeMillis())) {
+        if (expiresValue == null || (expiresValue.lifeTime() > 0 &&
+                ((expiresValue.createTime() + expiresValue.lifeTime()) < System.currentTimeMillis())
+                                    )
+            ) {
             if (lock.tryLock()) {
                 try {
                     if (expiresValue == null || expiresValue.value() == null) {
@@ -64,7 +67,7 @@ public class MybatisCache implements SpringCache {
                         // 判断是否过期，过期删除数据
                         if (cacheEntity != null) {
                             if (Objects.isNull(cacheEntity.getKey()) || Objects.isNull(cacheEntity.getValue())) {
-                                mapper.remove(tableName, cacheEntity.getId());
+                                mapper.removeById(tableName, cacheEntity.getId());
                             } else if (cacheEntity.getLifeTime() <= 0) {
                                 // 永久键
                                 value = ByteUtil.parseToObject(cacheEntity.getValue());
@@ -73,7 +76,7 @@ public class MybatisCache implements SpringCache {
                                 value = ByteUtil.parseToObject(cacheEntity.getValue());
                             } else {
                                 // 该缓存失效，删除
-                                mapper.remove(tableName, getName(), keyBytes);
+                                mapper.removeById(tableName, cacheEntity.getId());
                             }
                         }
                     }
@@ -110,7 +113,7 @@ public class MybatisCache implements SpringCache {
         byte[] keyBytes;
         try {
             keyBytes = ByteUtil.parseToByte(key);
-            mapper.remove(tableName, getName(), keyBytes);
+            mapper.removeByKey(tableName, getName(), keyBytes);
             this.store.remove(key);
         } catch (Exception e) {
             log.error("", e);
@@ -119,7 +122,7 @@ public class MybatisCache implements SpringCache {
 
     @Override
     public void clear() {
-        mapper.remove(tableName, getName());
+        mapper.removeByCacheName(tableName, getName());
         this.store.clear();
     }
 }

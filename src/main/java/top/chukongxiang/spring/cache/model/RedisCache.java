@@ -36,13 +36,22 @@ public class RedisCache implements SpringCache {
 
     @Override
     public Object get(Object key) {
+        key = serializeKey(key);
+
         Object value;
-        ExpiresValue<Object> expiresValue = this.store.get(serializeKey(key));
-        if (expiresValue == null || (expiresValue.lifeTime() > 0 && (expiresValue.createTime() + expiresValue.lifeTime()) > System.currentTimeMillis())) {
+        ExpiresValue<Object> expiresValue = this.store.get(key);
+        if (expiresValue == null || (expiresValue.lifeTime() > 0 &&
+                ((expiresValue.createTime() + expiresValue.lifeTime()) < System.currentTimeMillis())
+                                    )
+            ) {
             if (lock.tryLock()) {
                 try {
                     if (expiresValue == null || expiresValue.value() == null) {
-                        value = this.redisTemplate.opsForValue().get(key);
+                        String redisKey = (String) key;
+                        if (!redisKey.startsWith(getName())) {
+                            redisKey = getName().concat(":").concat(redisKey);
+                        }
+                        value = this.redisTemplate.opsForValue().get(redisKey);
                     } else {
                         value = null;
                     }
@@ -68,7 +77,7 @@ public class RedisCache implements SpringCache {
 
     @Override
     public void put(Object key, Object value, long lifeTime) {
-        this.store.put((String) key, new ExpiresValue<>().value(value)
+        this.store.put(serializeKey(key), new ExpiresValue<>().value(value)
                 .lifeTime(lifeTime)
                 .createTime(System.currentTimeMillis()));
     }

@@ -1,7 +1,9 @@
 package top.chukongxiang.spring.cache.manager;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.model.RedisCache;
@@ -24,6 +26,14 @@ public class RedisCacheManager implements SpringCacheManager {
 
     private static final Map<String, SpringCache> CACHE_CACHE_MAP = new ConcurrentHashMap<>();
     private final RedisTemplate<String, Object> redisTemplate;
+
+    public RedisCacheManager(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.afterPropertiesSet();
+        this.redisTemplate = redisTemplate;
+    }
 
     public RedisCacheManager(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -58,7 +68,7 @@ public class RedisCacheManager implements SpringCacheManager {
                         return true;
                     }
                     // 没过期
-                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() < System.currentTimeMillis();
+                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() >= System.currentTimeMillis();
                 })
                 .collect(Collectors.toMap(
                         k -> springCache.getName().concat(":").concat(k),
@@ -72,7 +82,8 @@ public class RedisCacheManager implements SpringCacheManager {
                 return;
             }
             if (v.lifeTime() > 0) {
-                this.redisTemplate.expire(k, v.lifeTime(), TimeUnit.MILLISECONDS);
+                String redisKey = k.startsWith(cacheName) ? k : (cacheName.concat(":").concat(k));
+                this.redisTemplate.expire(redisKey, v.lifeTime(), TimeUnit.MILLISECONDS);
             }
         });
 

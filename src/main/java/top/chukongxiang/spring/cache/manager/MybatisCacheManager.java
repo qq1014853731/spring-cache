@@ -1,7 +1,6 @@
 package top.chukongxiang.spring.cache.manager;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.binding.BindingException;
 import org.mybatis.spring.SqlSessionTemplate;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
@@ -29,22 +28,27 @@ public class MybatisCacheManager implements SpringCacheManager {
 
     private static final Map<String, SpringCache> CACHE_CACHE_MAP = new ConcurrentHashMap<>();
     private final String tableName;
-    private MybatisCacheMapper mapper;
+    private final MybatisCacheMapper mapper;
     private final SnowflakeIdWorker idWorker = new SnowflakeIdWorker(0, 0);
 
+    /**
+     *
+     * @param sqlSessionTemplate sqlSessionTemplate
+     * @param tableName 缓存表的表名，表结构参考：{@link MybatisCacheEntity}
+     */
     public MybatisCacheManager(SqlSessionTemplate sqlSessionTemplate, String tableName) {
         this.tableName = tableName;
         try {
-            this.mapper = sqlSessionTemplate.getMapper(MybatisCacheMapper.class);
-        } catch (Exception ignore) {
-            sqlSessionTemplate.getConfiguration().addMapper(MybatisCacheMapper.class);
-            try {
-                this.mapper = sqlSessionTemplate.getMapper(MybatisCacheMapper.class);
-                log.info("注入缓存管理Mapper成功：{}", this.mapper.getClass().getSimpleName());
-            } catch (BindingException e) {
-                log.error("未找到缓存管理器 Mapper!");
-                System.exit(0);
+            if (!sqlSessionTemplate.getConfiguration().hasMapper(MybatisCacheMapper.class)) {
+                sqlSessionTemplate.getConfiguration().addMapper(MybatisCacheMapper.class);
             }
+            this.mapper = sqlSessionTemplate.getMapper(MybatisCacheMapper.class);
+            // 检查表的正确性
+            this.mapper.validate(tableName);
+            log.info("注入缓存管理Mapper成功：{}", MybatisCacheMapper.class.getSimpleName());
+        } catch (Exception e) {
+            log.error("Mapper缓存应用失败，退出应用！", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -67,7 +71,7 @@ public class MybatisCacheManager implements SpringCacheManager {
                         return true;
                     }
                     // 没过期
-                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() < System.currentTimeMillis();
+                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() >= System.currentTimeMillis();
                 })
                 .map(k -> {
                             ExpiresValue<Object> value = store.get(k);
@@ -85,7 +89,9 @@ public class MybatisCacheManager implements SpringCacheManager {
                                 return mybatisCacheEntity;
                             }
                         }).collect(Collectors.toList());
-        mapper.insert(this.tableName, savedList);
+        if (savedList.size() > 0) {
+            mapper.insertBatch(this.tableName, savedList);
+        }
     }
 
     @Override
