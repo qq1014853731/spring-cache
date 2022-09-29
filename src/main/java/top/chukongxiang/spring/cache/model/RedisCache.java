@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import top.chukongxiang.spring.cache.core.SpringCache;
+import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import java.util.Objects;
 import java.util.Set;
@@ -27,8 +28,25 @@ public class RedisCache implements SpringCache {
 
     @Override
     public Object get(Object key) {
-        key = serializeKey(key);
-        return redisTemplate.opsForValue().get(key);
+        ExpiresValue<Object> nativeValue = getNativeValue(key);
+        if (nativeValue == null) {
+            return null;
+        }
+        return nativeValue.value();
+    }
+
+    @Override
+    public ExpiresValue<Object> getNativeValue(Object key) {
+        String keyStr = serializeKey(key);
+        Long expire = redisTemplate.getExpire(keyStr);
+        if (expire == null || expire < 0) {
+            // 不存在
+            return null;
+        }
+        Object value = redisTemplate.opsForValue().get(keyStr);
+        return new ExpiresValue<>().value(value)
+                .lifeTime(expire)
+                .createTime(System.currentTimeMillis() - expire);
     }
 
     @Override

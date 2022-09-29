@@ -18,6 +18,7 @@ import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.core.SpringKeyGenerator;
 import top.chukongxiang.spring.cache.generator.DefaultSpringKeyGenerator;
+import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
@@ -102,10 +103,18 @@ public class SpringCacheAop {
             if (springCache == null) {
                 continue;
             }
-            Object value = springCache.get(key);
-            if (value != null) {
+            ExpiresValue<Object> nativeValue = springCache.getNativeValue(key);
+            if (nativeValue == null) {
+                continue;
+            }
+            if (nativeValue.lifeTime() != expires) {
+                // 本次启动修改了缓存日期
+                springCache.evict(key);
+                break;
+            }
+            if (nativeValue.value() != null) {
                 // 如果有缓存，直接返回
-                return value;
+                return nativeValue.value();
             }
         }
 

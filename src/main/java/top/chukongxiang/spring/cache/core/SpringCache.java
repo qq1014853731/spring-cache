@@ -1,6 +1,7 @@
 package top.chukongxiang.spring.cache.core;
 
 import org.springframework.lang.Nullable;
+import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 /**
  * @author 楚孔响
@@ -26,6 +27,8 @@ public interface SpringCache {
      * @return 值
      */
     Object get(Object key);
+
+    ExpiresValue<Object> getNativeValue(Object key);
 
     /**
      * 向cache中放入一个缓存

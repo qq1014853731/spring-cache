@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.mapper.MybatisCacheMapper;
+import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 import top.chukongxiang.spring.cache.model.value.MybatisCacheEntity;
 import top.chukongxiang.spring.cache.tool.ByteUtil;
 import top.chukongxiang.spring.cache.tool.SnowflakeIdWorker;
@@ -49,6 +50,15 @@ public class MybatisCache implements SpringCache {
 
     @Override
     public Object get(Object key) {
+        ExpiresValue<Object> nativeValue = getNativeValue(key);
+        if (nativeValue == null) {
+            return null;
+        }
+        return nativeValue.value();
+    }
+
+    @Override
+    public ExpiresValue<Object> getNativeValue(Object key) {
         if (key == null) {
             return null;
         }
@@ -65,7 +75,7 @@ public class MybatisCache implements SpringCache {
         } else if (mybatisCacheEntities.size() == 1) {
             mybatisCacheEntity = mybatisCacheEntities.get(0);
         } else {
-            // 有多条缓存，只保留，删除其他缓存
+            // 有多条缓存，只保留最后一条，删除其他缓存
             mybatisCacheEntity = mybatisCacheEntities.get(mybatisCacheEntities.size() - 1);
             Set<Long> needRemovedIds = mybatisCacheEntities.stream().map(MybatisCacheEntity::getId)
                     .filter(id -> !id.equals(mybatisCacheEntity.getId()))
@@ -79,7 +89,10 @@ public class MybatisCache implements SpringCache {
             return null;
         }
         try {
-            return ByteUtil.parseToObject(mybatisCacheEntity.getValue());
+            return new ExpiresValue<>()
+                    .value(ByteUtil.parseToObject(mybatisCacheEntity.getValue()))
+                    .createTime(mybatisCacheEntity.getSaveTime())
+                    .lifeTime(mybatisCacheEntity.getLifeTime());
         } catch (IOException | ClassNotFoundException e) {
             log.error("", e);
             return null;
