@@ -9,6 +9,8 @@
 
 #### 安装教程
 1.引入依赖
+代码已上传至Maven中央公共仓库：[点击访问](https://repo1.maven.org/maven2/top/chukongxiang/spring-cache/)
+
 ```xml
 <dependency>
 	<groupId>top.chukongxiang</groupId>
