@@ -2,21 +2,16 @@ package top.chukongxiang.spring.cache.manager;
 
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.util.Assert;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.mapper.MybatisCacheMapper;
 import top.chukongxiang.spring.cache.model.MybatisCache;
-import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 import top.chukongxiang.spring.cache.model.value.MybatisCacheEntity;
-import top.chukongxiang.spring.cache.tool.ByteUtil;
 import top.chukongxiang.spring.cache.tool.SnowflakeIdWorker;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * MyBatis缓存管理，表结构参考：
@@ -54,58 +49,28 @@ public class MybatisCacheManager implements SpringCacheManager {
 
     @Override
     public void addCache(SpringCache springCache) {
-        MybatisCache mybatisCache = (MybatisCache) springCache;
-        ConcurrentHashMap<Object, ExpiresValue<Object>> store = mybatisCache.getStore();
-
-        List<MybatisCacheEntity> savedList = store.keySet().stream()
-                .filter(key -> {
-                    if (key == null) {
-                        return false;
-                    }
-                    ExpiresValue<Object> expiresValue = store.get(key);
-                    if (Objects.isNull(expiresValue)) {
-                        return false;
-                    }
-                    if (expiresValue.lifeTime() <= 0) {
-                        // 永久cache
-                        return true;
-                    }
-                    // 没过期
-                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() >= System.currentTimeMillis();
-                })
-                .map(k -> {
-                            ExpiresValue<Object> value = store.get(k);
-                            MybatisCacheEntity mybatisCacheEntity = new MybatisCacheEntity()
-                                    .setId(idWorker.nextId())
-                                    .setCacheName(mybatisCache.getName())
-                                    .setSaveTime(value.createTime())
-                                    .setLifeTime(value.lifeTime());
-                            try {
-                                return mybatisCacheEntity
-                                        .setKey(ByteUtil.parseToByte(k))
-                                        .setValue(ByteUtil.parseToByte(value.value()));
-                            } catch (IOException e) {
-                                log.error("", e);
-                                return mybatisCacheEntity;
-                            }
-                        }).collect(Collectors.toList());
-        if (savedList.size() > 0) {
-            mapper.insertBatch(this.tableName, savedList);
+        if (springCache == null) {
+            return;
         }
+        CACHE_CACHE_MAP.put(springCache.getName(), springCache);
     }
 
     @Override
     public SpringCache getCache(String cacheName) {
+        if (cacheName == null) {
+            return null;
+        }
         SpringCache springCache = CACHE_CACHE_MAP.get(cacheName);
         if (springCache == null) {
             springCache = getMissingCache(cacheName);
+            CACHE_CACHE_MAP.put(cacheName, springCache);
         }
-        CACHE_CACHE_MAP.put(cacheName, springCache);
         return springCache;
     }
 
     @Override
     public SpringCache getMissingCache(String cacheName) {
+        Assert.notNull(cacheName, "cacheName is must not be null");
         return new MybatisCache(cacheName, this.mapper, this.tableName);
     }
 
@@ -120,6 +85,8 @@ public class MybatisCacheManager implements SpringCacheManager {
 
     @Override
     public void remove(String cacheName, Object key) {
+        Assert.notNull(cacheName, "cacheName is must not be null");
+        Assert.notNull(key, "key is not null");
         SpringCache cache = CACHE_CACHE_MAP.get(cacheName);
         if (cache != null) {
             cache.evict(key);

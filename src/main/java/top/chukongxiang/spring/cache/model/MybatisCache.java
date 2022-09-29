@@ -4,15 +4,12 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.mapper.MybatisCacheMapper;
-import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 import top.chukongxiang.spring.cache.model.value.MybatisCacheEntity;
 import top.chukongxiang.spring.cache.tool.ByteUtil;
+import top.chukongxiang.spring.cache.tool.SnowflakeIdWorker;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author 楚孔响
@@ -25,7 +22,8 @@ public class MybatisCache implements SpringCache {
     private final String name;
     private final String tableName;
     private final MybatisCacheMapper mapper;
-    private Lock lock = new ReentrantLock();
+
+    private final SnowflakeIdWorker idWorker = new SnowflakeIdWorker(0, 0);
 
     public MybatisCache(String name,
                         MybatisCacheMapper mapper,
@@ -41,8 +39,6 @@ public class MybatisCache implements SpringCache {
         return this.name;
     }
 
-    private ConcurrentHashMap<Object, ExpiresValue<Object>> store = new ConcurrentHashMap<>();
-
     @Override
     public SpringCache getNativeCache() {
         return this;
@@ -53,46 +49,21 @@ public class MybatisCache implements SpringCache {
         if (key == null) {
             return null;
         }
-        Object value = null;
-        ExpiresValue<Object> expiresValue = this.store.get(key);
-        if (expiresValue == null || (expiresValue.lifeTime() > 0 &&
-                ((expiresValue.createTime() + expiresValue.lifeTime()) < System.currentTimeMillis())
-                                    )
-            ) {
-            if (lock.tryLock()) {
-                try {
-                    if (expiresValue == null || expiresValue.value() == null) {
-                        byte[] keyBytes = ByteUtil.parseToByte(key);
-                        MybatisCacheEntity cacheEntity = mapper.selectOne(tableName, getName(), keyBytes);
-                        // 判断是否过期，过期删除数据
-                        if (cacheEntity != null) {
-                            if (Objects.isNull(cacheEntity.getKey()) || Objects.isNull(cacheEntity.getValue())) {
-                                mapper.removeById(tableName, cacheEntity.getId());
-                            } else if (cacheEntity.getLifeTime() <= 0) {
-                                // 永久键
-                                value = ByteUtil.parseToObject(cacheEntity.getValue());
-                            } else if (cacheEntity.getSaveTime() + cacheEntity.getLifeTime() > System.currentTimeMillis()){
-                                // 在有效期
-                                value = ByteUtil.parseToObject(cacheEntity.getValue());
-                            } else {
-                                // 该缓存失效，删除
-                                mapper.removeById(tableName, cacheEntity.getId());
-                            }
-                        }
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    log.error("", e);
-                } finally {
-                    lock.unlock();
-                }
-            } else if (expiresValue != null){
-                value = expiresValue.value();
-            }
-        } else {
-            value = expiresValue.value();
+        MybatisCacheEntity mybatisCacheEntity;
+        try {
+            mybatisCacheEntity = this.mapper.selectOne(tableName, getName(), ByteUtil.parseToByte(key));
+        } catch (IOException e) {
+            throw new RuntimeException(key.getClass().getName() + " parse to byte error!");
         }
-
-        return value;
+        if (mybatisCacheEntity.getLifeTime() <= 0) {
+            // 永久缓存
+            return mybatisCacheEntity.getValue();
+        } else if (mybatisCacheEntity.getSaveTime() + mybatisCacheEntity.getLifeTime() < System.currentTimeMillis()) {
+            // 该缓存已过期
+            this.mapper.removeById(tableName, mybatisCacheEntity.getId());
+            return null;
+        }
+        return mybatisCacheEntity.getValue();
     }
 
     @Override
@@ -102,19 +73,30 @@ public class MybatisCache implements SpringCache {
 
     @Override
     public void put(Object key, Object value, long lifeTime) {
-        this.store.put(key, new ExpiresValue<>()
-                .value(value)
-                .createTime(System.currentTimeMillis())
-                .lifeTime(lifeTime));
+        if (lifeTime < 0) {
+            return;
+        }
+        try {
+            this.mapper.insert(tableName,
+                    idWorker.nextId(),
+                    getName(),
+                    ByteUtil.parseToByte(key),
+                    ByteUtil.parseToByte(value),
+                    System.currentTimeMillis(),
+                    lifeTime);
+        } catch (IOException e) {
+            log.error("", e);
+        }
     }
 
     @Override
     public void evict(Object key) {
-        byte[] keyBytes;
+        if (Objects.isNull(key)) {
+            return;
+        }
         try {
-            keyBytes = ByteUtil.parseToByte(key);
+            byte[] keyBytes = ByteUtil.parseToByte(key);
             mapper.removeByKey(tableName, getName(), keyBytes);
-            this.store.remove(key);
         } catch (Exception e) {
             log.error("", e);
         }
@@ -123,6 +105,5 @@ public class MybatisCache implements SpringCache {
     @Override
     public void clear() {
         mapper.removeByCacheName(tableName, getName());
-        this.store.clear();
     }
 }

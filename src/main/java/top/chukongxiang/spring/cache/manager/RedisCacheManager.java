@@ -4,16 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.util.Assert;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.model.RedisCache;
-import top.chukongxiang.spring.cache.model.value.ExpiresValue;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * RedisCache
@@ -46,66 +43,34 @@ public class RedisCacheManager implements SpringCacheManager {
      */
     @Override
     public void addCache(SpringCache springCache) {
-        if (!(springCache instanceof RedisCache)) {
-            throw new ClassCastException("can not cast " + springCache.getClass().getName() + " to " + RedisCache.class.getName());
+        if (springCache == null) {
+            return;
         }
-        RedisCache redisCache = (RedisCache) springCache.getNativeCache();
-        // 对cache进行put操作
-        String cacheName = redisCache.getName();
-        Map<String, ExpiresValue<Object>> caches = redisCache.getStore();
-        // 去除空key,空value，转为新map
-        Map<String, Object> savedMap = caches.keySet().stream()
-                .filter(key -> {
-                    if (key == null) {
-                        return false;
-                    }
-                    ExpiresValue<Object> expiresValue = caches.get(key);
-                    if (Objects.isNull(expiresValue)) {
-                        return false;
-                    }
-                    if (expiresValue.lifeTime() <= 0) {
-                        // 永久cache
-                        return true;
-                    }
-                    // 没过期
-                    return expiresValue.lifeTime() > 0 && expiresValue.createTime() + expiresValue.lifeTime() >= System.currentTimeMillis();
-                })
-                .collect(Collectors.toMap(
-                        k -> springCache.getName().concat(":").concat(k),
-                        k -> caches.get(k).value()));
-        this.redisTemplate.opsForValue().multiSet(savedMap);
-        // 删除缓存的 Cache
-        CACHE_CACHE_MAP.remove(cacheName);
-        // 设置生存时间,只对生存时间大于0的设置
-        caches.forEach((k, v) -> {
-            if (k == null || v == null || v.value() == null) {
-                return;
-            }
-            if (v.lifeTime() > 0) {
-                String redisKey = k.startsWith(cacheName) ? k : (cacheName.concat(":").concat(k));
-                this.redisTemplate.expire(redisKey, v.lifeTime(), TimeUnit.MILLISECONDS);
-            }
-        });
-
+        CACHE_CACHE_MAP.put(springCache.getName(), springCache);
     }
 
     @Override
     public SpringCache getCache(String cacheName) {
+        if (cacheName == null) {
+            return null;
+        }
         SpringCache springCache = CACHE_CACHE_MAP.get(cacheName);
         if (springCache == null) {
             springCache = getMissingCache(cacheName);
+            CACHE_CACHE_MAP.put(cacheName, springCache);
         }
-        CACHE_CACHE_MAP.put(cacheName, springCache);
         return springCache;
     }
 
     @Override
     public SpringCache getMissingCache(String cacheName) {
+        Assert.notNull(cacheName, "cacheName is must not be null");
         return new RedisCache(cacheName, this.redisTemplate);
     }
 
     @Override
     public void remove(String cacheName) {
+        Assert.notNull(cacheName, "cacheName is must not be null");
         SpringCache cache = CACHE_CACHE_MAP.get(cacheName);
         cache.clear();
         CACHE_CACHE_MAP.remove(cacheName);
@@ -113,6 +78,8 @@ public class RedisCacheManager implements SpringCacheManager {
 
     @Override
     public void remove(String cacheName, Object key) {
+        Assert.notNull(cacheName, "cacheName is must not be null");
+        Assert.notNull(key, "key is not null");
         SpringCache cache = CACHE_CACHE_MAP.get(cacheName);
         cache.evict(key);
     }

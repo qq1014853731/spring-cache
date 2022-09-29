@@ -115,8 +115,10 @@ public class SpringCacheAop {
         for (String cacheName : cacheNames) {
             SpringCache springCache =  springCacheManager.getCache(cacheName);
             // 写缓存,同时设置生存时间
+            if (springCache == null) {
+                continue;
+            }
             springCache.put(key, rs, timeUnit.toMillis(expires));
-            springCacheManager.addCache(springCache);
         }
         return rs;
     }
