@@ -1,5 +1,5 @@
 # spring-cache
-![version-2.1.0](https://img.shields.io/badge/version-2.0.2-blue)
+![version-2.1.1](https://img.shields.io/badge/version-2.1.1-blue)
 #### 介绍
 灵感来自于spring-cache，使用多种缓存管理器，并提供了缓存模板，可以更方便集成缓存
 
