@@ -56,7 +56,7 @@ public interface MybatisCacheMapper {
 
     @Delete("<script>" +
             "DELETE FROM `${tableName}` WHERE `id` in " +
-            "<foreach collection='ids' item='id' separator=',' open='(' colse=')'>" +
+            "<foreach collection='ids' item='id' separator=',' open='(' close=')'>" +
             "#{id}" +
             "</foreach>" +
             "</script>")
