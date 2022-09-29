@@ -42,22 +42,30 @@ public class ExpiresConcurrentMapCache implements SpringCache {
      */
     @Override
     public Object get(Object key) {
+        ExpiresValue<Object> nativeValue = getNativeValue(key);
+        if (nativeValue == null) {
+            return null;
+        }
+        return nativeValue.value();
+    }
+
+    @Override
+    public ExpiresValue<Object> getNativeValue(Object key) {
         ExpiresValue<Object> expiresValue = this.store.get(key);
         if (expiresValue == null) {
             return null;
         }
         if (expiresValue.lifeTime() <= 0) {
             // 生存时间小于等于0，说明永久有效
-            return expiresValue.value();
+            return expiresValue;
         }
         if (expiresValue.createTime() + expiresValue.lifeTime() <= System.currentTimeMillis()) {
             // 如果过期，移除
             evict(key);
             return null;
         }
-        return expiresValue.value();
+        return expiresValue;
     }
-
 
     @Override
     public void put(Object key, Object value) {

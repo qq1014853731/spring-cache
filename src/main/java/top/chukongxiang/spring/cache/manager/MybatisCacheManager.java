@@ -46,6 +46,7 @@ public class MybatisCacheManager implements SpringCacheManager {
             // 检查表的正确性
             this.mapper.validate(tableName);
             log.info("注入缓存管理Mapper成功：{}", MybatisCacheMapper.class.getSimpleName());
+            // 获取所有缓存项
         } catch (Exception e) {
             log.error("Mapper缓存应用失败，退出应用！", e);
             throw new RuntimeException(e);
