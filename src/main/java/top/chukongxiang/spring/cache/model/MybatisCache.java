@@ -9,7 +9,10 @@ import top.chukongxiang.spring.cache.tool.ByteUtil;
 import top.chukongxiang.spring.cache.tool.SnowflakeIdWorker;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author 楚孔响
@@ -49,12 +52,27 @@ public class MybatisCache implements SpringCache {
         if (key == null) {
             return null;
         }
-        MybatisCacheEntity mybatisCacheEntity;
+        List<MybatisCacheEntity> mybatisCacheEntities;
         try {
-            mybatisCacheEntity = this.mapper.selectByKey(tableName, getName(), ByteUtil.parseToByte(key));
+            mybatisCacheEntities = this.mapper.selectByKey(tableName, getName(), ByteUtil.parseToByte(key));
         } catch (IOException e) {
             throw new RuntimeException(key.getClass().getName() + " parse to byte error!");
         }
+
+        MybatisCacheEntity mybatisCacheEntity;
+        if (mybatisCacheEntities.size() == 0) {
+            return null;
+        } else if (mybatisCacheEntities.size() == 1) {
+            mybatisCacheEntity = mybatisCacheEntities.get(0);
+        } else {
+            // 有多条缓存，只保留，删除其他缓存
+            mybatisCacheEntity = mybatisCacheEntities.get(mybatisCacheEntities.size() - 1);
+            Set<Long> needRemovedIds = mybatisCacheEntities.stream().map(MybatisCacheEntity::getId)
+                    .filter(id -> !id.equals(mybatisCacheEntity.getId()))
+                    .collect(Collectors.toSet());
+            this.mapper.removeByIds(this.tableName, needRemovedIds);
+        }
+
         if (mybatisCacheEntity.getLifeTime() <= 0) {
             // 永久缓存
             return mybatisCacheEntity.getValue();
