@@ -17,19 +17,20 @@ public interface MybatisCacheMapper {
     @Select("select 1 from `${tableName}` limit 1;")
     Long validate(@Param("tableName") String tableName);
 
-    @Insert("INSERT INTO `${tableName}`(`cache_name`, `key`, `value`, `save_time`, `life_time`) " +
-            "VALUES(#{cacheName}, #{key, jdbcType=BLOB}, #{value, jdbcType=BLOB}, #{saveTime}, #{lifeTime})")
+    @Insert("INSERT INTO `${tableName}`(`id`,`cache_name`, `key`, `value`, `save_time`, `life_time`) " +
+            "VALUES(#{id}, #{cacheName}, #{key, jdbcType=BLOB}, #{value, jdbcType=BLOB}, #{saveTime}, #{lifeTime})")
     Long insert(@Param("tableName") String tableName,
                    @Param("id") Long id,
                    @Param("cacheName") String cacheName,
                    @Param("key") byte[] key,
                    @Param("value") byte[] value,
-                   @Param("save_time") long saveTime,
+                   @Param("saveTime") long saveTime,
                    @Param("lifeTime") long lifeTime);
 
     @Insert("INSERT INTO `${tableName}`(`cache_name`, `key`, `value`, `save_time`, `life_time`) " +
             "VALUES(#{entity.cacheName}, #{entity.key, jdbcType=BLOB}, #{entity.value, jdbcType=BLOB}, #{entity.saveTime}, #{entity.lifeTime})")
-    Long insertEntity(@Param("tableName") String tableName, @Param("entity") MybatisCacheEntity entity);
+    Long insertEntity(@Param("tableName") String tableName,
+                      @Param("entity") MybatisCacheEntity entity);
 
 
     @Insert("<script>" +

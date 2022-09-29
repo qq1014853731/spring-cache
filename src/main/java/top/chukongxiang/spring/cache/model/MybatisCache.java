@@ -73,15 +73,17 @@ public class MybatisCache implements SpringCache {
             this.mapper.removeByIds(this.tableName, needRemovedIds);
         }
 
-        if (mybatisCacheEntity.getLifeTime() <= 0) {
-            // 永久缓存
-            return mybatisCacheEntity.getValue();
-        } else if (mybatisCacheEntity.getSaveTime() + mybatisCacheEntity.getLifeTime() < System.currentTimeMillis()) {
+        if ((mybatisCacheEntity.getLifeTime() > 0) && mybatisCacheEntity.getSaveTime() + mybatisCacheEntity.getLifeTime() < System.currentTimeMillis()) {
             // 该缓存已过期
             this.mapper.removeById(tableName, mybatisCacheEntity.getId());
             return null;
         }
-        return mybatisCacheEntity.getValue();
+        try {
+            return ByteUtil.parseToObject(mybatisCacheEntity.getValue());
+        } catch (IOException | ClassNotFoundException e) {
+            log.error("", e);
+            return null;
+        }
     }
 
     @Override
