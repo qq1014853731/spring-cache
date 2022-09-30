@@ -82,4 +82,7 @@ public interface MybatisCacheMapper {
     List<MybatisCacheEntity> selectList(@Param("tableName") String tableName,
                                         @Param("cacheName") String cacheName);
 
+    @Select("SELECT `cache_name` FROM `${tableName}`")
+    List<String> selectCacheNames(@Param("tableName") String tableName);
+
 }

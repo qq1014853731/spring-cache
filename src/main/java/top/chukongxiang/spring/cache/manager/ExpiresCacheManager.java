@@ -5,6 +5,7 @@ import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.model.ExpiresConcurrentMapCache;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -59,5 +60,10 @@ public class ExpiresCacheManager implements SpringCacheManager {
     public void remove(String cacheName, Object key) {
         ExpiresConcurrentMapCache expiresConcurrentMapCache = this.caches.get(cacheName);
         expiresConcurrentMapCache.evict(key);
+    }
+
+    @Override
+    public Collection<String> getCacheNames() {
+        return this.caches.keySet();
     }
 }

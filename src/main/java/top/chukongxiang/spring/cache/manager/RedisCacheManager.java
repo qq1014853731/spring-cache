@@ -9,6 +9,7 @@ import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
 import top.chukongxiang.spring.cache.model.RedisCache;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -82,5 +83,10 @@ public class RedisCacheManager implements SpringCacheManager {
         Assert.notNull(key, "key is not null");
         SpringCache cache = CACHE_CACHE_MAP.get(cacheName);
         cache.evict(key);
+    }
+
+    @Override
+    public Collection<String> getCacheNames() {
+        throw new RuntimeException("redis cannot distinguish between cacheName and key");
     }
 }

@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.util.Collection;
+
 /**
  * @author 楚孔响
  * @date 2022-09-26 17:34
@@ -34,6 +36,10 @@ public class SpringCacheTemplate {
             nameStr = nameStr.replaceAll(":*$", "");
         }
         return nameStr;
+    }
+
+    public Collection<String> listCacheNames() {
+        return springCacheManager.getCacheNames();
     }
 
     public Object get(Object key) {

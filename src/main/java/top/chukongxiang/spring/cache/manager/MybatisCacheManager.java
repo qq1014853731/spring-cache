@@ -9,6 +9,7 @@ import top.chukongxiang.spring.cache.mapper.MybatisCacheMapper;
 import top.chukongxiang.spring.cache.model.MybatisCache;
 import top.chukongxiang.spring.cache.model.value.MybatisCacheEntity;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -97,5 +98,10 @@ public class MybatisCacheManager implements SpringCacheManager {
         if (cache != null) {
             cache.evict(key);
         }
+    }
+
+    @Override
+    public Collection<String> getCacheNames() {
+        return this.mapper.selectCacheNames(this.tableName);
     }
 }
