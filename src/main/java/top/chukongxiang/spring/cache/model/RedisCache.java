@@ -45,7 +45,7 @@ public class RedisCache implements SpringCache {
         }
         Object value = redisTemplate.opsForValue().get(keyStr);
         return new ExpiresValue<>().value(value)
-                .lifeTime(expire == -1 ? 0 : expire)
+                .lifeTime(expire == -1 ? 0 : TimeUnit.SECONDS.toMillis(expire))
                 .createTime(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(expire));
     }
 
