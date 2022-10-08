@@ -13,6 +13,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.util.SystemPropertyUtils;
 import top.chukongxiang.spring.cache.annotation.Cache;
 import top.chukongxiang.spring.cache.core.SpringCache;
 import top.chukongxiang.spring.cache.core.SpringCacheManager;
@@ -57,7 +58,10 @@ public class SpringCacheAop {
     /**
      * 默认前缀
      */
-    @Value("${spring.cache.prefix:}")
+    public static final String PREFIX_NAME = "spring.cache.prefix";
+    @Value(SystemPropertyUtils.PLACEHOLDER_PREFIX +
+            PREFIX_NAME +
+            SystemPropertyUtils.VALUE_SEPARATOR + SystemPropertyUtils.PLACEHOLDER_SUFFIX)
     String prefix;
 
     @Around("@annotation(top.chukongxiang.spring.cache.annotation.Cache)")
