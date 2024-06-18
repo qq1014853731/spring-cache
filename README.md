@@ -157,3 +157,26 @@ public class Controller {
 | cacheNames   | String[]                            | 缓存 cache 名称                                       | [前缀:]类名:方法名                     |
 | key          | String                              | 缓存 key 支持SpringEL表达式 如果为空，则使用keyGenerator()生成     | 空串                              |
 | keyGenerator | Class<? extends SpringKeyGenerator> | key生成器，当key为空时生效                                  | DefaultSpringKeyGenerator.class |
+
+
+#### SpringCacheTemplate 工具
+提供SpringCacheTemplate工具用于手动操作缓存
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import top.chukongxiang.spring.cache.core.SpringCacheTemplate;
+
+@SpringBootTest(classes = SpringCacheTemplate.class)
+public class SpringTemplateTest {
+
+    @Autowired
+    private SpringCacheTemplate springCacheTemplate;
+
+    public void test() {
+        springCacheTemplate.put("CacheName", "key", "value", 180 * 1000);
+        String value = springCacheTemplate.get("CacheName", "key", String.class);
+        System.out.println(value); // value
+    }
+}
+```
